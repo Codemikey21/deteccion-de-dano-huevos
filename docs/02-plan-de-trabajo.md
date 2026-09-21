@@ -67,12 +67,18 @@ Se agrega a `requirements.txt`: `pandas`, `matplotlib`, `seaborn`.
 
 ### Fase 4 — Entrenamiento del modelo
 
-Selección de la librería y de la arquitectura —decisión pendiente, ver
-[`01-alcance-del-proyecto.md`](01-alcance-del-proyecto.md), sección 8—, entrenamiento y
-guardado de los pesos.
+El detector se entrenará en **Google Colab con GPU**. **Decisión técnica provisional** (no
+entrenada ni validada): **YOLOv8**; baseline **YOLOv8n**; **YOLOv8s** como comparación futura
+si hay recursos. Ver [`10-decision-tecnica-provisional.md`](10-decision-tecnica-provisional.md).
+
+El clasificador de estado **sigue pendiente**.
+
+**No se entrena en esta fase del plan hasta** tener ≥ 1.000 imágenes reales y una fuente de
+detección con licencia usable. `egg_dataset` (Ahmed Raza) es
+**CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA**.
 
 Se crea: `training/`, `models/`.
-Se agrega a `requirements.txt`: la librería de aprendizaje profundo que se seleccione y
+Se agrega a `requirements.txt`: la librería de la familia YOLO que se instale en esa fase y
 `scikit-learn` para el cálculo de métricas.
 
 ### Fase 5 — Evaluación
@@ -90,14 +96,16 @@ Se agrega a `requirements.txt`: `pytest`.
 
 ### Fase 7 — Backend
 
-API que recibe los cuadros de video y devuelve las predicciones.
+API **FastAPI** que recibe los cuadros de video y devuelve las predicciones del detector y del
+clasificador de estado.
 
 Se crea: `backend/`.
 Se agrega a `requirements.txt`: `fastapi`, `uvicorn`, `python-multipart`.
 
 ### Fase 8 — Frontend
 
-Interfaz web que muestra el video y los resultados de la clasificación.
+Aplicación móvil **React Native + Expo + TypeScript**. En desarrollo se usa **Expo Go** en
+iPhone, **expo-camera** para la cámara y **React Native Reanimated** para animaciones.
 
 Se crea: `frontend/`.
 
@@ -132,7 +140,7 @@ deteccion-de-dano-huevos/
 ├── evaluation/        # Métricas y análisis de resultados
 ├── src/               # Módulos de inferencia y procesamiento en tiempo real
 ├── backend/           # API
-├── frontend/          # Interfaz web
+├── frontend/          # Aplicación React Native + Expo + TypeScript
 ├── scripts/           # Utilidades de apoyo
 ├── tests/             # Pruebas automatizadas
 ├── deploy/            # Configuración y documentación de despliegue

@@ -66,7 +66,8 @@ que sustenta esta separación está en
 
 ## 4. Entradas y salidas
 
-- **Entrada:** flujo de video en vivo de una cámara (webcam o cámara IP).
+- **Entrada:** flujo de video en vivo. En desarrollo, la cámara del iPhone mediante
+  **Expo Go** y **expo-camera**.
 - **Salida:** por cada huevo detectado, su posición en el cuadro, la clase de estado y la
   información de tipo según la definición que se valide en la sección 3b, junto con la
   confianza del modelo.
@@ -78,8 +79,9 @@ que sustenta esta separación está en
 - Etiquetado del conjunto de datos por estado y por tipo.
 - Entrenamiento y evaluación de un modelo de detección y clasificación.
 - Inferencia sobre video en tiempo real.
-- Interfaz web que muestre el video procesado y el resultado de la clasificación.
-- Despliegue en una instancia EC2 de AWS Academy Learner Lab.
+- Aplicación móvil **React Native + Expo + TypeScript** (en desarrollo, acceso desde iPhone
+  con **Expo Go**) que muestre el video y el resultado de la clasificación.
+- Despliegue del servicio de inferencia en una instancia EC2 de AWS Academy Learner Lab.
 
 ## 6. Fuera del alcance
 
@@ -108,16 +110,19 @@ Se resolverán en la fase correspondiente y se documentarán aquí:
 1. **Definición de las categorías de tipo** — **RESUELTA.** Son tres ejes independientes
    (estado, origen y calibre), no una sola variable. Ver
    [`05-taxonomia-clasificacion.md`](05-taxonomia-clasificacion.md).
-2. **Estrategia de etiquetas**: un modelo por eje o un modelo con varias salidas. Depende del
+2. **Detector** — **RESUELTA de forma provisional** (decisión técnica provisional, no
+   entrenada ni validada). Familia **YOLOv8**; baseline **YOLOv8n**; **YOLOv8s** como
+   comparación futura si los recursos lo permiten. Ver
+   [`10-decision-tecnica-provisional.md`](10-decision-tecnica-provisional.md).
+3. **Arquitectura del clasificador de estado** — **PENDIENTE.** El módulo existe en el
+   diseño (recortes → `bueno` / `grieta` / `sucio` / `danado`); la red concreta no se ha
+   elegido.
+4. **Estrategia de etiquetas**: un modelo por eje o un modelo con varias salidas. Depende del
    volumen de datos que se consiga para cada eje.
-3. **Arquitectura y librería del modelo**: detector de objetos de una etapa frente a
-   detección con OpenCV seguida de un clasificador sobre el recorte de cada huevo. No se
-   compromete de antemano ninguna librería ni arquitectura concreta.
-4. **Origen de las imágenes**: captura propia, imágenes cedidas o una combinación.
-5. **Geometría de la captura**: si se fija la distancia cámara-objeto o se incluye un patrón
+5. **Origen de las imágenes**: captura propia, imágenes cedidas o una combinación.
+6. **Geometría de la captura**: si se fija la distancia cámara-objeto o se incluye un patrón
    de referencia, necesario únicamente si alguna categoría depende del calibre.
-6. **Infraestructura**: tipo de instancia EC2 y si la inferencia se ejecutará en la nube o en
-   el equipo local con la nube sirviendo únicamente la aplicación web.
+7. **Tipo de instancia EC2** en AWS Academy Learner Lab.
 
 ## 9. Criterios de éxito
 
@@ -129,4 +134,6 @@ El proyecto se considerará exitoso si:
 3. El desempeño del modelo se reporta con métricas medidas sobre un conjunto de prueba
    independiente. Los umbrales se definirán al conocer el tamaño y el balance reales del
    conjunto de datos; no se fija ningún valor por anticipado.
-4. La solución queda desplegada y accesible desde el navegador.
+4. El servicio de inferencia queda desplegado en EC2 y la aplicación móvil React Native + Expo
+   + TypeScript puede consultarlo. Durante el desarrollo, el acceso es desde iPhone mediante
+   Expo Go.

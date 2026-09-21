@@ -211,6 +211,7 @@ Ver sección 3. **51 imágenes.** MIT. YOLO.
 | Escenario | Cinta industrial de clasificación de huevos |
 | Tamaño | 125,6 MB |
 | Licencia | **PENDIENTE DE VERIFICACIÓN** (la ficha consultada no la muestra) |
+| Estado de selección | **CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA.** No aprobado. No descargado |
 | Detección | **Alta, si la licencia es usable:** supera 1.000 y el escenario se parece al nuestro |
 | Estado | `normal`/`cracked` → candidatos a `bueno`/`grieta`, **sin validar**. No cubre `sucio` ni `danado` |
 
@@ -346,12 +347,12 @@ DATASET ACTUAL Egg-Detection:
     Script y README se mantienen.
 
 DATASET PRINCIPAL DE DETECCIÓN:
-    PENDIENTE.
+    CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA.
 
-    Candidato a verificar (licencia):
-      egg_dataset (Ultralytics / Ahmed Raza)
-      2.553 imágenes, cinta industrial, normal + cracked
-      https://platform.ultralytics.com/ahmed-raza/datasets/eggdataset
+    egg_dataset (Ultralytics Platform / Ahmed Raza)
+    2.553 imágenes declaradas, cinta industrial, descripción: normal + cracked
+    https://platform.ultralytics.com/ahmed-raza/datasets/eggdataset
+    NO APROBADO. NO DESCARGADO. La ficha no muestra licencia.
 
     Camino verificable mientras tanto:
       INDIGO (840, CC BY 4.0) + Egg-Detection (51, MIT) + capturas propias
@@ -391,6 +392,12 @@ REQUISITO FINAL:
 - **No se borraron** las decisiones de `docs/06` y `docs/07`; se añadió trazabilidad.
 - Licencia **nueva** confirmada: Egg Variety (Mendeley) **CC BY 4.0**.
 - Licencia **pendiente** más urgente: Ultralytics `egg_dataset` (2.553 imágenes).
+  Estado: **CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA.** No aprobado, no descargado.
+
+La pila de implementación (decisión técnica provisional: YOLOv8n, Colab, FastAPI, React Native
++ Expo + TypeScript) está en
+[`10-decision-tecnica-provisional.md`](10-decision-tecnica-provisional.md).
+**No se entrena todavía.**
 
 **Siguiente paso:** verificar a mano la licencia y las clases de `egg_dataset` y de las fichas
 Roboflow de ≥ 1.000 imágenes; no entrenar hasta que el recuento de imágenes **reales** del

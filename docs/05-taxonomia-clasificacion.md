@@ -277,6 +277,11 @@ Así encajan los tres ejes en el procesamiento de cada cuadro de video. Los paso
 - El recorte de cada huevo es lo que permite que las clasificaciones trabajen sobre un solo huevo
   aunque el cuadro contenga varios.
 
+La implementación prevista de este flujo (detector YOLOv8 — decisión técnica provisional;
+clasificador de estado pendiente; API FastAPI; cliente React Native + Expo + TypeScript) está
+en [`10-decision-tecnica-provisional.md`](10-decision-tecnica-provisional.md).
+**Ningún módulo está entrenado ni implementado.**
+
 ---
 
 ## 4. Qué no afirma este documento

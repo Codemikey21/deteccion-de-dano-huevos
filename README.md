@@ -44,8 +44,8 @@ real a partir del flujo de video de una cámara.
 1. Construir un conjunto de datos propio de imágenes de huevos, etiquetado por estado y por tipo.
 2. Entrenar y evaluar un modelo de detección y clasificación sobre ese conjunto de datos.
 3. Implementar la inferencia sobre video en vivo, con detección automática de cada huevo.
-4. Exponer el sistema mediante un servicio web accesible desde el navegador.
-5. Desplegar la solución en una instancia EC2 de AWS Academy Learner Lab.
+4. Exponer el sistema mediante una API FastAPI consumida por una aplicación móvil React Native + Expo + TypeScript (en desarrollo, acceso desde iPhone mediante Expo Go).
+5. Desplegar el servicio de inferencia en una instancia EC2 de AWS Academy Learner Lab.
 
 El detalle del alcance está en [`docs/01-alcance-del-proyecto.md`](docs/01-alcance-del-proyecto.md)
 y el plan por fases en [`docs/02-plan-de-trabajo.md`](docs/02-plan-de-trabajo.md).
@@ -62,16 +62,21 @@ como *candidata* todavía no están decididas.
 | Manejo de datos | NumPy | Confirmada |
 | Control de versiones | Git, GitHub | Confirmada |
 | Infraestructura | AWS EC2 (Academy Learner Lab) | Confirmada |
+| Entrenamiento | Google Colab con GPU | Confirmada (no ejecutado) |
+| Detector | YOLOv8 (seleccionado provisionalmente); baseline **YOLOv8n**; comparación posterior **YOLOv8s** | Decisión técnica provisional (no entrenado, no validado) |
+| Backend | FastAPI | Confirmada (no implementado) |
+| Frontend | React Native + Expo + TypeScript; acceso desde iPhone mediante Expo Go durante el desarrollo | Confirmada (no implementado) |
+| Cámara (desarrollo) | expo-camera | Confirmada (no implementado) |
+| Animaciones | React Native Reanimated | Confirmada (no implementado) |
 | Etiquetado del conjunto de datos | Roboflow | Candidata |
 | Análisis exploratorio | Pandas, Matplotlib | Candidata |
-| Modelado | Por definir; TensorFlow / Keras y scikit-learn están entre las opciones | Candidata |
-| Backend | FastAPI | Candidata |
-| Frontend | HTML, CSS, JavaScript | Candidata |
+| Clasificador de estado | Arquitectura todavía por definir | Pendiente |
 
-**La arquitectura del modelo no está decidida.** La elección de la librería y del enfoque
-—detector de objetos en una etapa, o detección con OpenCV seguida de un clasificador sobre el
-recorte de cada huevo— depende de la investigación sobre los datos y de las pruebas que se
-realicen. No se compromete de antemano ninguna librería, arquitectura, métrica ni resultado.
+La arquitectura es **modular**: detector de huevos, clasificador de estado visual y
+extensiones posteriores. El detalle está en
+[`docs/10-decision-tecnica-provisional.md`](docs/10-decision-tecnica-provisional.md).
+**No hay modelo entrenado.** El conjunto `egg_dataset` de Ahmed Raza es
+**CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA**: no está aprobado ni descargado.
 
 ## 4. Estructura del repositorio
 
@@ -109,7 +114,7 @@ deteccion-de-dano-huevos/
 ├── evaluation/        # Métricas y análisis de resultados
 ├── src/               # Módulos de inferencia y procesamiento en tiempo real
 ├── backend/           # API
-├── frontend/          # Interfaz web
+├── frontend/          # Aplicación React Native + Expo + TypeScript
 ├── scripts/           # Utilidades de apoyo
 ├── tests/             # Pruebas automatizadas
 ├── deploy/            # Configuración y documentación de despliegue
