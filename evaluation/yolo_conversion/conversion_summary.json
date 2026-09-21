@@ -1,0 +1,104 @@
+{
+  "seed": 42,
+  "train_ratio": 0.85,
+  "split_counts": {
+    "train": 629,
+    "val": 111,
+    "test": 100
+  },
+  "class_distribution": {
+    "train": {
+      "crack": 713,
+      "egg": 628
+    },
+    "val": {
+      "crack": 125,
+      "egg": 111
+    },
+    "test": {
+      "crack": 107,
+      "egg": 99
+    }
+  },
+  "validation": {
+    "images_without_label": [],
+    "labels_without_image": [],
+    "coords_out_of_range": [],
+    "invalid_width_height": [],
+    "invalid_classes": [],
+    "image_counts": {
+      "train": 629,
+      "val": 111,
+      "test": 100
+    },
+    "label_counts": {
+      "train": 629,
+      "val": 111,
+      "test": 100
+    },
+    "train_has_egg_and_crack": true,
+    "val_has_egg_and_crack": true,
+    "test_has_egg_and_crack": true
+  },
+  "comparison": [
+    {
+      "split": "val",
+      "image": "IMG_20220816_144745.jpg",
+      "objects": 2,
+      "max_diff_px": 0.0,
+      "ok": true
+    },
+    {
+      "split": "train",
+      "image": "IMG_20220817_151659.jpg",
+      "objects": 2,
+      "max_diff_px": 0.0,
+      "ok": true
+    },
+    {
+      "split": "train",
+      "image": "IMG_20220812_105737.jpg",
+      "objects": 2,
+      "max_diff_px": 0.0,
+      "ok": true
+    },
+    {
+      "split": "test",
+      "image": "IMG_20220818_154335.jpg",
+      "objects": 2,
+      "max_diff_px": 0.0,
+      "ok": true
+    },
+    {
+      "split": "train",
+      "image": "IMG_20220816_142058.jpg",
+      "objects": 2,
+      "max_diff_px": 0.0,
+      "ok": true
+    },
+    {
+      "split": "train",
+      "image": "IMG_20220816_141101.jpg",
+      "objects": 2,
+      "max_diff_px": 0.0,
+      "ok": true
+    },
+    {
+      "split": "train",
+      "image": "IMG_20220816_140953.jpg",
+      "objects": 3,
+      "max_diff_px": 0.0,
+      "ok": true
+    },
+    {
+      "split": "train",
+      "image": "IMG_20220816_142908.jpg",
+      "objects": 2,
+      "max_diff_px": 0.0,
+      "ok": true
+    }
+  ],
+  "copy_bytes": 2408861345,
+  "raw_intact": true,
+  "ready": true
+}
