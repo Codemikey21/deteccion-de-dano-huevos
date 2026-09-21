@@ -36,6 +36,7 @@ htmlcov/
 # se reconstruye desde su fuente (Roboflow / capturas propias).
 # Se conservan los README y los .gitkeep para preservar la estructura.
 # ---------------------------------------------------------------
+/indigo_yolo.zip
 data/**
 !data/**/
 !data/**/.gitkeep
