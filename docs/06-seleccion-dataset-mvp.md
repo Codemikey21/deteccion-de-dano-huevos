@@ -427,6 +427,24 @@ verificadas** y sujetas a inspección visual antes de aceptarlas.
 
 ---
 
+## 6.1 Actualización por el requisito de 1.000 imágenes reales
+
+> **Trazabilidad.** Inicialmente se seleccionó Egg-Detection como candidato principal; posteriormente, al conocerse el requisito académico de mínimo 1.000 imágenes, se mantuvo como dataset complementario y se amplió la estrategia. El texto de la sección 6 se conserva como registro de esa decisión inicial. El detalle de la revisión está en [`09-revision-datasets-requisito-1000.md`](09-revision-datasets-requisito-1000.md).
+
+Egg-Detection (**51 imágenes reales**) **no se descarta**. Pasa a ser **DATASET COMPLEMENTARIO
+DE DETECCIÓN**. No cumple el mínimo de 1.000 imágenes reales. 423 cajas no equivalen a 1.000
+fotografías. El script `scripts/download_detection_dataset.py` se conserva.
+
+El conjunto de entrenamiento (detección y, por separado, estado) deberá tener **≥ 1.000 imágenes
+reales** antes de entrenar. El *augmentation* no cuenta para ese mínimo. La captura propia sigue
+siendo obligatoria (cuatro clases, mismo escenario) y puede sumarse a fuentes públicas para
+alcanzar el recuento.
+
+**DATASET PRINCIPAL DE DETECCIÓN:** pendiente (ver `docs/09`). El camino verificable más corto
+hoy es INDIGO (840) + Egg-Detection (51) = 891, más capturas propias u otra fuente verificada.
+
+---
+
 ## 7. Verificaciones obligatorias antes de descargar
 
 Esta selección es **provisional**. Antes de traer un solo archivo hay que resolver:

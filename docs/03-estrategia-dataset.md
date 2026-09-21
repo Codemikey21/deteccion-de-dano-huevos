@@ -146,7 +146,7 @@ Criterios con los que se evaluará cualquier candidato cuando se realice la bús
 | Correspondencia | Que las clases se parezcan a las nuestras; un conjunto de "huevos frescos vs. podridos" no resuelve "grieta vs. sucio" |
 | Calidad de anotación | Si trae cajas, que estén bien ajustadas y completas |
 | Condiciones de captura | Qué tan parecidas son a nuestro escenario de banda simulada |
-| Volumen y balance | Cuántas imágenes hay por clase |
+| Volumen y balance | Cuántas imágenes **reales** hay por clase. El conjunto de entrenamiento debe tener **como mínimo 1.000 imágenes reales** (requisito académico añadido después de la estrategia inicial; ver [`09-revision-datasets-requisito-1000.md`](09-revision-datasets-requisito-1000.md)). 1.000 cajas no equivalen a 1.000 imágenes. El *data augmentation* no cuenta para ese mínimo |
 
 **No se registrará ningún conjunto de datos en este documento hasta haberlo verificado
 directamente.** No se listan nombres, enlaces ni cifras de conjuntos que no se hayan revisado.
@@ -161,6 +161,10 @@ de captura están en la sección 5.
 
 Es la opción más probable: usar material público para dar volumen inicial al detector y material
 propio para ajustar el sistema a nuestras condiciones reales.
+
+El conjunto **final** de entrenamiento (público + propio) deberá contener **al menos 1.000
+imágenes reales**, y preferiblemente **1.200 a 2.000** si los datos lo permiten. No se exige que
+las 1.000 las tome el equipo si existen conjuntos públicos apropiados.
 
 Si se combinan fuentes, hay dos precauciones:
 
@@ -405,6 +409,9 @@ Lo que queda establecido:
   desempate.
 - Están definidos los criterios con los que se evaluará cualquier fuente de datos.
 - Está definida la estructura de carpetas prevista y la proporción preliminar de las particiones.
+- El conjunto de entrenamiento deberá tener **≥ 1.000 imágenes reales** (objetivo 1.200–2.000).
+  Este requisito se añadió después de redactar la estrategia inicial; el detalle está en
+  [`09-revision-datasets-requisito-1000.md`](09-revision-datasets-requisito-1000.md).
 - Están definidos los criterios de captura propia y las comprobaciones de calidad pendientes.
 - Está establecida la regla de agrupación por huevo y por secuencia.
 

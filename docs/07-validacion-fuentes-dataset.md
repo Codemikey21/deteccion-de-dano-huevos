@@ -409,7 +409,7 @@ fuentes públicas aprobadas, para no crear un desbalance artificial entre clases
 LISTOS PARA DESCARGA:
     1. Egg-Detection (Hugging Face, afshin-dini)
        Licencia MIT, verificada por API el 21/09/2026
-       Uso: deteccion `egg`
+       Uso: deteccion `egg` — DATASET COMPLEMENTARIO (51 imagenes; no cubre el minimo de 1000)
        51 imagenes, 423 cajas anotadas, 108 archivos, ~339.47 MiB
 
     2. Dataset for real-time crack detection on chicken eggs (figshare, INDIGO)
@@ -478,3 +478,17 @@ DATOS PROPIOS OBLIGATORIOS:
 **Siguiente paso (subpaso 7 de la Fase 1):** descargar los tres conjuntos aprobados a
 `data/raw/public/`, registrar sus atribuciones e inspeccionar una muestra para validar las
 equivalencias de etiquetas que hoy figuran como no validadas.
+
+---
+
+## 8. Actualización por el requisito de 1.000 imágenes reales
+
+> **Trazabilidad.** Inicialmente se seleccionó Egg-Detection como candidato principal; posteriormente, al conocerse el requisito académico de mínimo 1.000 imágenes, se mantuvo como dataset complementario y se amplió la estrategia. El recuadro de la sección 6 se conserva. El detalle está en [`09-revision-datasets-requisito-1000.md`](09-revision-datasets-requisito-1000.md).
+
+Egg-Detection **no se borra** ni deja de estar listo para descarga. Con 51 imágenes reales no
+puede ser el conjunto principal de entrenamiento. INDIGO (840) + Egg-Detection (51) = **891**,
+todavía por debajo del mínimo.
+
+Antes de entrenar, el conjunto de entrenamiento (detección y, por separado, estado) debe
+reunir **≥ 1.000 imágenes reales**. El *augmentation* no cuenta. La captura propia sigue
+obligatoria y puede completar el recuento junto con fuentes públicas.

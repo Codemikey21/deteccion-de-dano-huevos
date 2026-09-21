@@ -3,6 +3,10 @@
 > **Estado: PENDIENTE DE EJECUCIÓN.** La descarga todavía no se ha ejecutado. Esta carpeta
 > contiene únicamente este archivo. Las cantidades marcadas como *verificadas* se completarán
 > después de ejecutar `scripts/download_detection_dataset.py`.
+>
+> **Requisito académico (añadido después):** el entrenamiento exige ≥ 1.000 imágenes reales.
+> Este conjunto tiene 51 imágenes y se conserva como **complementario**, no como fuente principal.
+> Ver [`../../../docs/09-revision-datasets-requisito-1000.md`](../../../docs/09-revision-datasets-requisito-1000.md).
 
 ---
 
