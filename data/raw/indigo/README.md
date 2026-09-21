@@ -1,14 +1,12 @@
 # Conjunto de datos: INDIGO Crack Detection
 
-> **Estado: PENDIENTE DE EJECUCIÓN.** La descarga todavía no se ha ejecutado. Esta carpeta
-> contiene únicamente este archivo. Las cantidades marcadas como *verificadas* se completarán
-> después de ejecutar `scripts/download_indigo_dataset.py`.
+> **Estado: LISTO PARA EDA.** Descarga y auditoría en disco hechas el 21/09/2026.
+> **No se ha entrenado.** No se ha convertido VOC a YOLO. No se ha hecho *preprocessing*.
 >
-> **Uso vigente:** dataset **principal inicial** de detección. Posteriormente, el profesor
-> confirmó que un conjunto de al menos 800 imágenes es aceptable. Por tanto, INDIGO con 840
-> imágenes cumple el requisito académico. Ver
-> [`../../../docs/09-revision-datasets-requisito-1000.md`](../../../docs/09-revision-datasets-requisito-1000.md),
-> sección 12.
+> Dataset **principal inicial**. Posteriormente, el profesor confirmó que un conjunto de al
+> menos 800 imágenes es aceptable. Por tanto, INDIGO con **840 imágenes reales** cumple el
+> requisito académico. Detalle de la auditoría:
+> [`../../../docs/13-validacion-final-indigo.md`](../../../docs/13-validacion-final-indigo.md).
 
 ---
 
@@ -24,78 +22,64 @@
 | **DOI** | 10.6084/m9.figshare.21568425.v1 |
 | **Identificador figshare** | artículo `21568425`, versión 1 |
 | **Licencia** | **CC BY 4.0** |
-| **Verificación de la licencia** | API de figshare, `license.name` = `CC BY 4.0`, `license.url` = https://creativecommons.org/licenses/by/4.0/ ; consultada el 21/09/2026 |
+| **Verificación de la licencia** | API de figshare, 21/09/2026 |
 | **Publicado** | 16/11/2022 |
-| **Fecha de consulta de metadatos** | 21/09/2026 |
-| **Fecha de descarga** | PENDIENTE DE EJECUCIÓN |
+| **Fecha de descarga** | 21/09/2026 |
+| **Fecha de auditoría** | 21/09/2026 |
 
-## Contenido declarado por el origen
+---
 
-Datos de la descripción oficial y de la API de figshare (`/v2/articles/21568425`),
-consultada el 21/09/2026. **No son cantidades verificadas en disco.**
+## Cantidades verificadas en disco
 
-| Campo | Valor declarado |
+| Elemento | Verificado |
 | --- | --- |
-| Imágenes | **840** |
-| Split train | **740** |
-| Split test | **100** |
-| Clases | `egg` y `crack` |
-| Formato de anotación | **PENDIENTE DE EJECUCIÓN** (la ficha no lo detalla; se leerá tras extraer) |
-| ZIP oficiales | `train.zip` (1.948.036.678 bytes, MD5 `6bdc229bc98c808ad7ec3f76e0e5feeb`) y `test.zip` (266.920.567 bytes, MD5 `0d1bca3b8408cd7114cbcf0c6836c34b`) |
-| Duplicado en metadatos | `test.zip` aparece **dos veces** con el mismo tamaño y el mismo MD5 (ids `38230539` y `38230545`). El script descarga **uno** solo |
-| Tamaño de los ZIP | 2.214.957.245 bytes ≈ **2,06 GiB** (la ficha se redondeaba a ~2,5 GB) |
+| Imágenes **reales** | **840** JPEG |
+| Train real | **740** (`train/train_100/*.jpg`) |
+| Test real | **100** (`test/test_100/*.jpg`) |
+| Anotaciones | **840** Pascal VOC XML (740 + 100) |
+| Clases | `egg` (838 cajas / 838 imágenes), `crack` (945 cajas / 817 imágenes) |
+| JPEG corruptos | **0** |
+| XML sin imagen | **0** |
+| Imágenes sin XML | **0** |
+| Duplicados MD5 (fotos reales) | **0** |
+| Resolución principal | **3456 × 4608** (839 fotos; 1 foto en 4608 × 3456) |
+| MD5 de los ZIP | correcto (`train.zip` `6bdc229bc98c808ad7ec3f76e0e5feeb`, `test.zip` `0d1bca3b8408cd7114cbcf0c6836c34b`) |
 
-## Cantidad de archivos verificada
+**Hay que ignorar `__MACOSX/` y cualquier archivo `._*`.** Son sidecars de macOS, no
+fotografías. El primer conteo del script (1.680 “imágenes”) sumó 840 JPEG reales + 840
+`._*.jpg`. **No se borra `__MACOSX/` en este paso**; EDA y *preprocessing* futuros no deben
+entrar ahí.
 
-**PENDIENTE DE EJECUCIÓN.**
+---
 
-| Elemento | Verificado en disco |
-| --- | --- |
-| Imágenes totales | PENDIENTE DE EJECUCIÓN |
-| Imágenes train | PENDIENTE DE EJECUCIÓN |
-| Imágenes test | PENDIENTE DE EJECUCIÓN |
-| Clases reales | PENDIENTE DE EJECUCIÓN |
-| Formato de anotaciones | PENDIENTE DE EJECUCIÓN |
-| Tamaño ocupado | PENDIENTE DE EJECUCIÓN |
-| MD5 de los ZIP | PENDIENTE DE EJECUCIÓN |
+## Estructura local (tras extraer)
+
+```
+data/raw/indigo/
+├── train.zip
+├── test.zip
+├── train/train_100/     ← JPEG + XML reales (usar esto)
+├── train/__MACOSX/      ← ignorar
+├── test/test_100/       ← JPEG + XML reales (usar esto)
+└── test/__MACOSX/       ← ignorar
+```
+
+---
+
+## Formato y clases
+
+- Anotaciones: **Pascal VOC XML**, un `.xml` por `.jpg`, mismo *stem*.
+- Clases en los XML: **`egg`** y **`crack`**.
+- No es YOLO. La conversión, si hace falta para YOLOv8n, es un paso posterior.
+
+---
 
 ## Uso previsto
 
-Dataset **principal inicial** para:
+1. **Detección** de huevos (`egg`).
+2. Apoyo a la clase de estado **`grieta`** (`crack`).
 
-1. **Detección** de huevos, clase `egg` (módulo 1, YOLOv8n — decisión técnica provisional, no entrenada).
-2. **Estado `grieta`**, clase `crack` del mismo conjunto.
-
-**No cubre** `sucio` ni `danado`. **No** se usa todavía para entrenar: falta descargar e
-inspeccionar.
-
-Egg-Detection (`data/raw/detection/`) se conserva como **complementario**. Ahmed Raza
+No cubre `sucio` ni `danado`. Egg-Detection sigue como complementario. Ahmed Raza
 `egg_dataset` sigue **PENDIENTE DE LICENCIA**.
 
-## Validación esperada (después de la descarga real)
-
-No ejecutar esta lista hasta haber descargado. Entonces hay que comprobar:
-
-| Comprobación | Esperado |
-| --- | --- |
-| Número de imágenes | exactamente **840** |
-| Split train | **740** |
-| Split test | **100** |
-| Clases reales | las que existan en las anotaciones (declaradas `egg` y `crack`) |
-| Formato de anotaciones | el que traiga el origen (YOLO, COCO u otro); no se convierte en este paso |
-| Imágenes corruptas | ninguna ilegible |
-| Etiquetas faltantes | cada imagen de train/test con su anotación, o registro de las que no la tengan |
-| Distribución por clase | conteo de `egg` y `crack` (cajas o imágenes, según el formato) |
-| Resolución | ancho × alto de una muestra; no se redimensiona nada |
-| Consistencia de anotaciones | cajas dentro de la imagen; clase conocida; sin archivos de etiqueta huérfanos |
-
-Hasta entonces, todos esos campos quedan como **PENDIENTE DE EJECUCIÓN**.
-
-## Observaciones
-
-1. **Requisito académico vigente: ≥ 800 imágenes reales.** INDIGO declara 840. Cumple. No se
-   busca más dataset por cantidad ni se prepara captura propia para completar un mínimo.
-2. La partición original es train/test, **sin validation**. Una partición de validación, si hace
-   falta, se definirá más adelante. Este script **no** la crea.
-3. Extraer los ZIP no modifica los bytes de las imágenes. Transformar, reetiquetar o entrenar
-   queda fuera de este paso.
+**Siguiente paso técnico:** EDA sobre `train/train_100/` y `test/test_100/`. No entrenar.
