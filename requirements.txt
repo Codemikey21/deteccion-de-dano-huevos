@@ -1,9 +1,8 @@
-# Dependencias de la FASE ACTUAL (preparación del entorno y captura de imágenes).
+# Dependencias de la FASE ACTUAL (preparación + EDA de INDIGO).
 #
 # Las librerías de fases posteriores se agregan en el commit de la fase que las
 # usa por primera vez, no antes:
-#   - Fase de exploración: pandas, matplotlib, seaborn
-#   - Fase de modelado:    la librería de aprendizaje profundo que se seleccione
+#   - Fase de modelado:    la librería de la familia YOLO que se instale entonces
 #   - Fase de backend:     fastapi, uvicorn, python-multipart
 #
 # Las versiones se fijarán exactas (pip freeze) cuando el entorno virtual esté
@@ -12,3 +11,5 @@
 numpy>=1.26
 opencv-python>=4.9
 python-dotenv>=1.0
+pandas>=2.2
+matplotlib>=3.8

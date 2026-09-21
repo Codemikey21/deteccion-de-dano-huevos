@@ -1,0 +1,109 @@
+{
+  "imagenes_total": 840,
+  "train": 740,
+  "test": 100,
+  "anotaciones_xml": 840,
+  "instancias_total": 1783,
+  "instancias_por_clase": {
+    "crack": 945,
+    "egg": 838
+  },
+  "imagenes_con_egg": 838,
+  "imagenes_con_crack": 817,
+  "imagenes_ambas": 815,
+  "imagenes_solo_egg": 23,
+  "imagenes_solo_crack": 2,
+  "imagenes_sin_objetos": 0,
+  "objetos_por_imagen": {
+    "media": 2.1226190476190476,
+    "mediana": 2.0,
+    "min": 1,
+    "max": 5,
+    "distribucion": {
+      "1": 23,
+      "2": 709,
+      "3": 92,
+      "4": 14,
+      "5": 2
+    }
+  },
+  "resoluciones": {
+    "3456x4608": 839,
+    "4608x3456": 1
+  },
+  "portrait": 839,
+  "landscape": 1,
+  "calidad": {
+    "cajas_fuera": 0,
+    "cajas_degeneradas": 0,
+    "muy_pequenas": 27,
+    "muy_grandes": 0,
+    "xml_invalidos": [],
+    "jpg_sin_xml": [],
+    "xml_sin_jpg": []
+  },
+  "iou_entre_clases": {
+    "pares": 941,
+    "iou_media": 0.12242562938944292,
+    "iou_mediana": 0.061650706794345644,
+    "iou_gt_0_1": 362
+  },
+  "por_clase": {
+    "egg": {
+      "instancias": 838,
+      "pct_instancias": 46.999439147504205,
+      "bbox_w_media": 2152.8221957040573,
+      "bbox_h_media": 1718.3317422434368,
+      "area_rel_media": 0.23316139147682702,
+      "area_rel_mediana": 0.22317875363699202,
+      "area_rel_min": 0.16113683127572018,
+      "area_rel_max": 0.3853789906442901,
+      "muy_pequenas": 0,
+      "muy_grandes": 0
+    },
+    "crack": {
+      "instancias": 945,
+      "pct_instancias": 53.000560852495795,
+      "bbox_w_media": 643.2560846560847,
+      "bbox_h_media": 572.4571428571429,
+      "area_rel_media": 0.027680911129495417,
+      "area_rel_mediana": 0.014680085358796295,
+      "area_rel_min": 0.0003017221458654835,
+      "area_rel_max": 0.2506306966145833,
+      "muy_pequenas": 27,
+      "muy_grandes": 0
+    }
+  },
+  "por_split": {
+    "train": {
+      "imagenes": 740,
+      "objetos": 1577,
+      "objetos_por_imagen_media": 2.131081081081081,
+      "pct_con_egg": 99.86486486486487,
+      "pct_con_crack": 96.89189189189189,
+      "area_rel_media": 0.12314286233201621,
+      "resoluciones": {
+        "3456x4608": 739,
+        "4608x3456": 1
+      }
+    },
+    "test": {
+      "imagenes": 100,
+      "objetos": 206,
+      "objetos_por_imagen_media": 2.06,
+      "pct_con_egg": 99.0,
+      "pct_con_crack": 100.0,
+      "area_rel_media": 0.13277385037555653,
+      "resoluciones": {
+        "3456x4608": 100
+      }
+    }
+  },
+  "brillo_muestra": {
+    "n": 80,
+    "min": 62.53352737426758,
+    "max": 99.1728515625,
+    "media": 73.39723935127259,
+    "std": 8.676257169719227
+  }
+}
