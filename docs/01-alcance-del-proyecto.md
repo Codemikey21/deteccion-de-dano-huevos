@@ -25,7 +25,9 @@ automática. La captura es continua: el usuario **no** toma fotografías manualm
 
 ## 3. Tareas de aprendizaje
 
-El sistema combina dos tareas sobre cada huevo detectado en el cuadro de video:
+Por cada huevo detectado en el cuadro de video, el sistema trabaja sobre **tres ejes
+independientes**. No son tres opciones de una misma lista: un mismo huevo recibe un valor en
+cada eje.
 
 **a) Clasificación por estado**
 
@@ -36,33 +38,31 @@ El sistema combina dos tareas sobre cada huevo detectado en el cuadro de video:
 | Sucio | Cáscara íntegra con suciedad adherida |
 | Dañado | Cáscara rota o deformada |
 
-**b) Clasificación por tipo — definición pendiente de validación**
+**b) Clasificación por tipo u origen — eje independiente, experimental**
 
-La clasificación por tipo es un **requisito propuesto del proyecto** y se mantiene dentro del
-alcance. Sin embargo, las categorías del enunciado todavía **no tienen una definición
-operativa** y **no deben asumirse como tres clases mutuamente excluyentes**.
+Corresponde al origen o tipo de producción del huevo: `criollo` y `semicriollo`. Es
+independiente del estado, porque un huevo criollo también puede estar sucio o agrietado.
 
-| Categoría propuesta | Estado de la definición |
-| --- | --- |
-| Triple A | Por validar. Investigar si corresponde a una característica de calibre o tamaño. |
-| Criollo | Por validar. Investigar si corresponde a una característica de origen o tipo de producción. |
-| Semicriollo | Por validar. Investigar su definición y su relación con las dos anteriores. |
+**No se afirma que estas categorías puedan distinguirse mediante visión artificial.** No existe
+ningún conjunto de datos público etiquetado así, y la viabilidad depende de que se logre
+construir uno propio y de que las categorías resulten visualmente separables. Queda clasificado
+como **experimental**, fuera del producto mínimo.
 
-Antes de etiquetar el conjunto de datos deben resolverse estos puntos:
+**c) Clasificación por calibre comercial — eje independiente, extensión futura**
 
-1. **Verificar con fuentes** la definición de cada categoría y determinar si pertenecen al
-   mismo eje de clasificación. Si "Triple A" describe calibre mientras que "criollo" y
-   "semicriollo" describen origen, se trata de dos atributos distintos y no de tres clases
-   excluyentes.
-2. **Comprobar qué es distinguible en las imágenes** que efectivamente se logren recolectar.
-   Una categoría que no sea separable visualmente no puede sostenerse como clase.
-3. **No asumir que la cámara puede determinar el calibre real.** Estimar el tamaño físico a
-   partir de una imagen exige una referencia de escala conocida: distancia cámara-objeto fija,
-   un patrón de tamaño conocido en la escena, o información adicional externa.
+"Triple A" **no es una categoría de apariencia, sino de peso**, según la norma técnica
+colombiana NTC 1240. Por tanto **no pertenece al mismo eje que "criollo" y "semicriollo"**, y no
+puede determinarse a partir de una imagen sin una referencia de escala y, aun con ella, sin una
+medición real del peso.
 
-Según el resultado de esa investigación, la solución podrá implementarse como una
-clasificación única, como predicción de atributos múltiples o como modelos separados. La
-decisión se documentará aquí cuando se tome.
+El calibre solo podría clasificarse si el peso entrara al sistema como **dato externo**: una
+balanza, un sensor, un valor ingresado manualmente o un sistema externo. Queda como **extensión
+futura**.
+
+La taxonomía completa, el reparto entre obligatorio, experimental y futuro, y el flujo del
+sistema están en [`05-taxonomia-clasificacion.md`](05-taxonomia-clasificacion.md). La evidencia
+que sustenta esta separación está en
+[`04-investigacion-datasets.md`](04-investigacion-datasets.md), secciones 3.1 a 3.5.
 
 ## 4. Entradas y salidas
 
@@ -105,10 +105,11 @@ decisión se documentará aquí cuando se tome.
 
 Se resolverán en la fase correspondiente y se documentarán aquí:
 
-1. **Definición de las categorías de tipo** (sección 3b): a qué eje pertenece cada una y si
-   son excluyentes entre sí. Es la decisión de la que dependen las demás.
-2. **Estrategia de etiquetas**, condicionada por la anterior: clasificación única,
-   predicción de atributos múltiples o modelos separados para estado y para tipo.
+1. **Definición de las categorías de tipo** — **RESUELTA.** Son tres ejes independientes
+   (estado, origen y calibre), no una sola variable. Ver
+   [`05-taxonomia-clasificacion.md`](05-taxonomia-clasificacion.md).
+2. **Estrategia de etiquetas**: un modelo por eje o un modelo con varias salidas. Depende del
+   volumen de datos que se consiga para cada eje.
 3. **Arquitectura y librería del modelo**: detector de objetos de una etapa frente a
    detección con OpenCV seguida de un clasificador sobre el recorte de cada huevo. No se
    compromete de antemano ninguna librería ni arquitectura concreta.
