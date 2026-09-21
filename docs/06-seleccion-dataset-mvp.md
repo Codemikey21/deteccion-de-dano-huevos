@@ -50,17 +50,20 @@ Por tanto, en este documento:
 | Criterio | Evaluación |
 | --- | --- |
 | URL | https://huggingface.co/datasets/afshin-dini/Egg-Detection |
-| Número de imágenes | 423 filas, 356 MB |
-| Clases | `white-egg`, `brown-egg` (por color de cáscara) |
-| Cajas delimitadoras | **Sí**, formato YOLOv5 |
+| Número de imágenes | **51** (49 en `train`, 2 en `val`) |
+| Instancias anotadas | **423 cajas** (393 en `train`, 30 en `val`), unas 8 por imagen |
+| Archivos totales | 108 (51 imágenes, 51 etiquetas, 6 de configuración) |
+| Tamaño | 339,47 MiB ≈ 355,96 MB |
+| Clases | **PENDIENTE DE VERIFICACIÓN** hasta leer `data/data.yaml`. La ficha sugiere dos clases por color de cáscara |
+| Cajas delimitadoras | **Sí**, formato YOLO |
 | Tipo de tarea | Detección de objetos |
 | Calidad aparente de las anotaciones | **Indicios favorables**: hay un modelo entrenado y publicado sobre este conjunto, un repositorio de código asociado y 322 descargas en el último mes. **No verificado por inspección** |
 | Licencia | **MIT** — confirmada en la propia ficha del conjunto |
 | Resolución | No especificado por la fuente |
 | Fondos | Declarados por el autor como variados a propósito: bandeja de plástico transparente, cartón claro y cartón oscuro. **No verificado** |
-| Variedad visual | Dos colores de cáscara; varios tipos de bandeja. Escenas de huevos en bandeja o caja |
-| Compatibilidad con nuestro objetivo | **Alta.** Las dos clases se fusionan en nuestra clase única `egg` sin ambigüedad: ambas son huevos |
-| Limitaciones | Pocas imágenes. División solo en `train` y `val`, **sin partición de prueba**. Escenario de bandeja, **no de banda transportadora** |
+| Variedad visual | Varios colores de cáscara y varios tipos de bandeja. Escenas de huevos en bandeja o caja |
+| Compatibilidad con nuestro objetivo | **Alta.** Cualquiera que sea el nombre de sus clases, todas designan huevos y se fusionan en nuestra clase única `egg` sin ambigüedad |
+| Limitaciones | **Solo 51 imágenes.** División original de 49 en `train` y 2 en `val`, **sin partición de prueba y con una validación inservible**. Escenario de bandeja, **no de banda transportadora** |
 
 ### 1.2 Egg-count-detection-1 (Roboflow Universe)
 
@@ -134,16 +137,36 @@ en formato YOLO listo para usar, que tiene un modelo y un repositorio de código
 —señal de que las anotaciones funcionan— y que su autor declara haber buscado variedad de fondos
 a propósito.
 
-El número de imágenes (423) es bajo, pero **cada imagen contiene varios huevos**, de modo que el
-número real de cajas anotadas es sustancialmente mayor. Para un detector de una sola clase, con
-un objeto de forma tan regular como un huevo, es un punto de partida razonable.
+**El volumen de imágenes es pequeño: 51.** Lo que amortigua esa cifra es que cada imagen contiene
+varios huevos, de modo que el conjunto aporta **423 instancias anotadas**, unas 8 por imagen. Para
+un detector de una sola clase, con un objeto de forma tan regular como un huevo, 423 ejemplos de
+objeto son un punto de partida utilizable.
+
+Conviene sostener las dos afirmaciones a la vez, porque tiran en direcciones distintas: **hay
+pocas imágenes pero bastantes objetos anotados**. Lo primero limita la variedad de escenas, los
+fondos y las condiciones de luz que el modelo llega a ver; lo segundo le da suficientes ejemplos
+de la forma «huevo» como para aprenderla. El resultado es un conjunto válido como **línea base
+para la detección**, y claramente insuficiente como fuente única.
+
+> **Corrección.** Una versión anterior de este documento afirmaba que el conjunto tenía 423
+> imágenes y que las cajas serían «sustancialmente más». Era incorrecto en los dos extremos: 423
+> era ya el recuento de cajas, y las imágenes son 51. Ver la comprobación en
+> [`04-investigacion-datasets.md`](04-investigacion-datasets.md), sección 1.1.
 
 ### ¿Es suficiente por sí solo? No
 
-**No lo es, por una razón de escenario más que de volumen.** Las imágenes son de huevos en
-bandeja y en caja de cartón; nuestro sistema verá huevos pasando sobre una banda simulada, con
-nuestra iluminación, nuestra cámara y nuestro fondo. Un detector entrenado solo con bandejas
-puede dar buenas métricas en validación y comportarse peor frente a nuestra escena real.
+**No lo es, por dos razones distintas: el escenario y el volumen.**
+
+Por escenario: las imágenes son de huevos en bandeja y en caja de cartón, mientras que nuestro
+sistema verá huevos pasando sobre una banda simulada, con nuestra iluminación, nuestra cámara y
+nuestro fondo. Un detector entrenado solo con bandejas puede dar buenas métricas en validación y
+comportarse peor frente a nuestra escena real.
+
+Por volumen: 51 imágenes cubren muy pocas situaciones distintas, y la división original deja 2
+imágenes para validar, lo que no permite medir nada con sentido. **Habrá que rehacer la división
+en `train` / `validation` / `test`** durante la preparación del conjunto, respetando la regla de
+agrupación por huevo físico de [`03-estrategia-dataset.md`](03-estrategia-dataset.md). No se crea
+ninguna partición todavía.
 
 **Conviene combinarlo con capturas propias**, con dos funciones distintas:
 
@@ -345,6 +368,7 @@ opcional, sino parte del camino crítico del MVP**.
 DATASET DE DETECCIÓN:
     Egg-Detection (Hugging Face, afshin-dini) — licencia MIT, formato YOLO
     https://huggingface.co/datasets/afshin-dini/Egg-Detection
+    51 imagenes con 423 cajas anotadas. Linea base, insuficiente por si sola.
 
     Complementos condicionados a verificar licencia y tamaño:
       - Egg-count-detection-1 (Roboflow) — único con escenario de banda transportadora
@@ -384,8 +408,10 @@ DATOS PROPIOS NECESARIOS:
 
 **Para detección se elige Egg-Detection** porque es el único candidato con licencia permisiva
 verificada en su propia ficha, viene en formato YOLO listo para usar y tiene un modelo de
-referencia que sugiere que sus anotaciones funcionan. Sus dos clases por color se fusionan en
-`egg` sin ambigüedad.
+referencia que sugiere que sus anotaciones funcionan. Sus clases se fusionan en `egg` sin
+ambigüedad, sea cual sea su nombre definitivo. Aporta **51 imágenes con 423 cajas anotadas**:
+sirve como línea base del detector, pero **habrá que complementarlo** con el conjunto de INDIGO
+y con capturas propias del escenario de banda.
 
 **Para el estado no se elige un conjunto, sino una combinación**, porque **ninguno de los
 candidatos contiene las cuatro clases**. La combinación propuesta cubre tres de ellas con

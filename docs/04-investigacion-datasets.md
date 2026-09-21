@@ -47,24 +47,46 @@ conjunto de datos.
 | Fuente | Hugging Face Datasets (autor: afshin-dini) |
 | URL | https://huggingface.co/datasets/afshin-dini/Egg-Detection |
 | Tipo de tarea | Detección de objetos |
-| Número de imágenes | 423 filas; 356 MB en total |
-| Clases | `white-egg`, `brown-egg` |
-| Formato de anotación | YOLOv5 (carpetas `train`/`val` con `labels`, más `data.yaml`) |
+| Número de imágenes | **51** (49 en `train`, 2 en `val`) |
+| Instancias anotadas | **423 cajas** (393 en `train`, 30 en `val`), unas 8 por imagen |
+| Archivos totales | 108 (51 imágenes, 51 etiquetas, 6 de configuración) |
+| Tamaño | 339,47 MiB ≈ 355,96 MB |
+| Clases | **PENDIENTE DE VERIFICACIÓN.** La ficha sugiere `white-egg` y `brown-egg`, pero no se ha leído `data/data.yaml`, que es donde se definen los nombres y su orden numérico |
+| Formato de anotación | YOLO (carpetas `train`/`val` con `labels`, más `data.yaml`) |
 | Licencia | **MIT** |
 | Código asociado | https://github.com/afshindini/Deep-Egg-Detection-and-Counter |
+
+> **Corrección sobre las «423 filas».** La ficha de Hugging Face anuncia *423 filas*, cifra que
+> en este documento se interpretó inicialmente como número de imágenes. **No lo es: son las
+> instancias anotadas, es decir, las cajas.** El conjunto tiene 51 imágenes.
+>
+> La comprobación se hizo el 21/09/2026 contra el listado oficial de archivos del repositorio
+> (`/api/datasets/afshin-dini/Egg-Detection/tree/main?recursive=true`), sin descargar nada:
+> contiene 51 archivos `.jpg` y 51 archivos `.txt` de etiquetas. Cada línea de un archivo YOLO
+> ocupa exactamente 38 bytes y los 51 archivos encajan sin excepción en `3 + 38n` bytes. Al
+> despejar y sumar las líneas de todos ellos resultan **exactamente 423**, que coincide al dígito
+> con la cifra anunciada. El tamaño declarado de «356 MB» sí era correcto.
 
 **Ventajas.** Es el único candidato de detección con **licencia explícita y permisiva** (MIT)
 confirmada en su propia ficha. Formato YOLO listo para usar. El autor indica que las imágenes se
 recogieron con distintos tipos y colores de bandeja (plástico transparente, cartón claro y
-oscuro) precisamente para dar robustez frente al fondo. Cada imagen contiene varios huevos, por
-lo que el número de cajas anotadas es bastante mayor que el número de imágenes.
+oscuro) precisamente para dar robustez frente al fondo. Cada imagen contiene varios huevos: las
+51 imágenes suman 423 cajas anotadas, unas 8 por imagen, lo que da bastante más señal de
+entrenamiento de lo que sugiere el recuento de imágenes.
 
-**Limitaciones.** Pocas imágenes. Las escenas son huevos en bandeja o caja, **no en banda
-transportadora**. Solo trae división en `train` y `val`: no hay partición de prueba, habría que
-construirla. Las dos clases son por color de cáscara, no por estado.
+**Limitaciones.** **Muy pocas imágenes: 51.** Las escenas son huevos en bandeja o caja, **no en
+banda transportadora**. La división original es de 49 imágenes en `train` y solo 2 en `val`, y
+no hay partición de prueba. Las clases son por color de cáscara, no por estado.
 
-**Utilidad.** Alta como base para el detector de una sola clase: se pueden fusionar `white-egg`
-y `brown-egg` en nuestra clase única `egg`. La licencia MIT elimina el riesgo legal.
+> **La partición original no sirve para una validación seria.** Dos imágenes de validación no
+> permiten medir nada con sentido. Al preparar el conjunto habrá que rehacer la división en
+> `train` / `validation` / `test`, respetando la regla de agrupación por huevo físico de
+> [`03-estrategia-dataset.md`](03-estrategia-dataset.md). No se crea ninguna partición todavía.
+
+**Utilidad.** Alta como base para el detector de una sola clase: cualquiera que sea el nombre
+definitivo de sus clases, todas designan huevos y se fusionan en nuestra clase única `egg`. La
+licencia MIT elimina el riesgo legal. Su volumen, sin embargo, lo deja en el papel de punto de
+partida y no de fuente única.
 
 ### 1.2 egg detection final (Roboflow Universe)
 
@@ -464,7 +486,7 @@ No podemos concluir que sea imposible; sí podemos concluir que **no debemos dar
 
 | Conjunto | Tarea | Cajas | Clases | Resolución | Fondo / escenario | Licencia |
 | --- | --- | --- | --- | --- | --- | --- |
-| Egg-Detection (HF) | Detección | Sí | 2 (color) | No especificado | Bandejas y cajas variadas | MIT |
+| Egg-Detection (HF) | Detección | Sí (51 img, 423 cajas) | PENDIENTE (ficha: 2 por color; `data.yaml` no leído) | No especificado | Bandejas y cajas variadas | MIT |
 | egg detection final | Detección | Sí | No especificado | No especificado | No especificado | CC BY 4.0 |
 | Egg-count-detection-1 | Detección | Sí | 1 (`Egg`) | No especificado | Banda transportadora (declarado) | No especificado |
 | Crack detection (INDIGO) | Detección | Sí | 2 (`egg`, `crack`) | No especificado | No especificado | No especificado |
@@ -529,7 +551,9 @@ esto se ha descargado ni verificado imagen por imagen.
 **Mejor candidato: Egg-Detection de Hugging Face** (https://huggingface.co/datasets/afshin-dini/Egg-Detection).
 Es el único con licencia permisiva confirmada en su propia ficha (MIT), viene en formato YOLO
 listo para usar, tiene código de referencia asociado y su autor buscó deliberadamente variedad de
-fondos. Sus dos clases se fusionan sin problema en nuestra clase única `egg`.
+fondos. Sus clases se fusionan sin problema en nuestra clase única `egg`. **Son solo 51
+imágenes, aunque con 423 cajas anotadas**, de modo que sirve como base pero no como fuente
+única.
 
 **Alternativa: Egg-count-detection-1 de Roboflow**
 (https://universe.roboflow.com/data-science-devhu/egg-count-detection-1), por ser el único cuyo
@@ -589,8 +613,9 @@ es difícil incluso con imagen hiperespectral.
 
 ### 6.1 Qué parece útil
 
-1. **Egg-Detection de Hugging Face**, licencia MIT, formato YOLO: el candidato más sólido de
-   toda la investigación y la base propuesta para el detector.
+1. **Egg-Detection de Hugging Face** (51 imágenes con 423 cajas anotadas), licencia MIT, formato
+   YOLO: el candidato más sólido de toda la investigación y la base propuesta para el detector,
+   aunque su volumen de imágenes obliga a complementarlo.
 2. **Crack detection de INDIGO** (840 imágenes, clases `egg` y `crack`): sirve a la vez para
    detección y para la clase `grieta`, con respaldo universitario y DOI. Sujeto a verificar
    licencia.

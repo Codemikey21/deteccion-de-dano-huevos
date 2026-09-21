@@ -48,7 +48,12 @@ pueda citarse.
 | **Licencia** | **MIT** |
 | Fuente de la verificación | API de Hugging Face, campo `cardData.license` = `mit`; etiqueta `license:mit` |
 | Datos confirmados en la misma consulta | Autor `afshin-dini`; 322 descargas en el último mes; categoría de tamaño `n<1K`; última modificación 18/03/2025 |
+| Contenido auditado (árbol de archivos, 21/09/2026, sin descargar) | **51 imágenes** (49 `train`, 2 `val`), **423 cajas anotadas**, 108 archivos, 339,47 MiB ≈ 355,96 MB |
 | Obligaciones | Atribución y conservación del aviso de licencia |
+
+> **La partición original no sirve para una validación seria.** Dos imágenes en `val` no permiten
+> medir nada con sentido. Al preparar el conjunto se rehará la división en `train` / `validation`
+> / `test`. No se crea ninguna partición todavía.
 
 #### Dataset for real-time crack detection on chicken eggs — figshare (INDIGO)
 
@@ -204,12 +209,13 @@ oficial de la fuente, de las que descansan únicamente en el nombre de la etique
 ### 3.1 Detección
 
 ```
-white-egg, brown-egg  ->  egg          (Egg-Detection, Hugging Face)
-Estado: PARCIALMENTE VALIDADO
-Motivo: la fusión es segura en el plano conceptual, porque ambas etiquetas designan
-        huevos y solo se distinguen por el color de la cáscara, que es irrelevante
-        para una detección de clase única. Es la equivalencia más sólida de todo el
-        proyecto. Falta confirmar que las cajas estén bien trazadas.
+clases originales  ->  egg              (Egg-Detection, Hugging Face)
+Estado: PENDIENTE DE VERIFICACIÓN
+Motivo: la ficha sugiere dos clases por color de cáscara, y en el plano conceptual
+        ambas designarían huevos, fusionables en nuestra clase única `egg`.
+        Los nombres exactos y su orden numérico están en `data/data.yaml`, que
+        todavía no se ha leído. Hasta entonces no se afirma que las clases sean
+        `white-egg` y `brown-egg`.
 
 egg  ->  egg                            (INDIGO, figshare)
 Estado: PARCIALMENTE VALIDADO
@@ -262,7 +268,7 @@ Motivo: ninguna de estas fichas es accesible, de modo que no hay documentacion o
 
 | Equivalencia | Estado | Bloqueada por licencia |
 | --- | --- | --- |
-| `white-egg` + `brown-egg` → `egg` | PARCIALMENTE VALIDADO | No |
+| clases de Egg-Detection → `egg` | **PENDIENTE DE VERIFICACIÓN** (nombres en `data.yaml` no leídos) | No |
 | `egg` → `egg` | PARCIALMENTE VALIDADO | No |
 | `crack` → `grieta` | PARCIALMENTE VALIDADO | No |
 | `good` → `bueno` | NO VALIDADO | No |
@@ -298,11 +304,19 @@ La verificación de licencias **cambia el panorama respecto a
 
 | Clase | Cobertura antes de validar | Cobertura con licencia verificada |
 | --- | --- | --- |
-| `egg` (detección) | 1 fuente aprobada | **2 fuentes aprobadas**, aproximadamente 1.260 imágenes |
+| `egg` (detección) | 1 fuente aprobada | **2 fuentes aprobadas**, 891 imágenes (51 + 840) |
 | `grieta` | 3 fuentes, ninguna confirmada | **1 fuente aprobada** (INDIGO) |
 | `bueno` | 2 fuentes | **1 fuente aprobada, y con etiqueta no validada** |
 | `sucio` | 3 fuentes | **Ninguna fuente aprobada** |
 | `danado` | Ninguna | **Ninguna** |
+
+> **Corrección de cifras (21/09/2026).** Una versión anterior de esta tabla decía
+> «aproximadamente 1.260 imágenes», sumando las 423 atribuidas entonces a Egg-Detection más las
+> 840 de INDIGO. **Egg-Detection tiene 51 imágenes, no 423**: esa cifra era su número de cajas
+> anotadas. La suma correcta es **51 + 840 = 891 imágenes**. Las 51 imágenes de Egg-Detection
+> contienen **423 cajas anotadas**, de modo que en número de objetos su aportación es mayor de lo
+> que sugiere el recuento de imágenes. Ver la comprobación en
+> [`04-investigacion-datasets.md`](04-investigacion-datasets.md), sección 1.1.
 
 Dicho de forma directa: **las tres fuentes de `sucio` estaban todas en Roboflow**, así que al
 exigir licencia verificada esa clase se queda sin cobertura pública alguna. **Dos de las cuatro
@@ -396,6 +410,7 @@ LISTOS PARA DESCARGA:
     1. Egg-Detection (Hugging Face, afshin-dini)
        Licencia MIT, verificada por API el 21/09/2026
        Uso: deteccion `egg`
+       51 imagenes, 423 cajas anotadas, 108 archivos, ~339.47 MiB
 
     2. Dataset for real-time crack detection on chicken eggs (figshare, INDIGO)
        DOI 10.6084/m9.figshare.21568425.v1
