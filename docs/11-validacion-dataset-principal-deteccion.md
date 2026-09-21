@@ -135,9 +135,10 @@ descargado) muestra:
 | `egg` | **58.347** |
 
 Hay huevos anotados en volumen alto (**58.347 cajas**). Eso **no** dice cuántas **imágenes**
-distintas contienen al menos un huevo. El requisito académico es ≥ 1.000 **imágenes reales**,
-no 1.000 cajas
+distintas contienen al menos un huevo. El requisito académico documentado primero era ≥ 1.000 **imágenes reales**, no 1.000 cajas
 ([`09-revision-datasets-requisito-1000.md`](09-revision-datasets-requisito-1000.md)).
+Posteriormente, el profesor confirmó que un conjunto de al menos 800 imágenes es aceptable.
+Por tanto, INDIGO con 840 imágenes cumple el requisito académico.
 
 La proporción de cajas es ~73 % gallina / ~27 % huevo. El riesgo de que **muchas imágenes sean
 solo gallinas** es alto y está respaldado por:
@@ -156,7 +157,8 @@ solo gallinas** es alto y está respaldado por:
 - no contar las 21.586 imágenes como si todas fueran de huevos.
 
 Hasta no poder listar etiquetas, **no se puede afirmar** que el subconjunto con huevos
-supere 1.000 imágenes. Es plausible por el número de cajas `egg`, y **no está demostrado**.
+supere el umbral académico vigente (800 imágenes). Es plausible por el número de cajas `egg`,
+y **no está demostrado**.
 
 ### Escenas de producción
 
@@ -191,12 +193,12 @@ El `data.yaml` publicado apunta a una ruta local del autor
 | --- | --- | --- | --- | --- |
 | URL viva | **404 / 401** | Accesible | Accesible (DOI) | Ficha Ultralytics accesible; **sin licencia en la ficha** |
 | Imágenes reales | 21.586 **declaradas**, no auditadas | **51** auditadas | **840** | **2.553** declaradas |
-| ¿Cubre ≥ 1.000 sola? | Solo si el subconjunto `egg` lo cubre; **no medido** | No | No | Sí en volumen, si la licencia fuera usable |
+| ¿Cubre ≥ 800 sola? (umbral vigente) | Solo si el subconjunto `egg` lo cubre; **no medido** | No | **Sí** (840) | Sí en volumen, si la licencia fuera usable |
 | Licencia | CC BY 4.0 **del empaquetado**, orígenes por verificar | **MIT** verificada (API HF) | **CC BY 4.0** verificada (API figshare) | **PENDIENTE DE LICENCIA** |
 | Formato | YOLO | YOLO | Cajas `egg` / `crack` | Detección de objetos |
 | Clases | `chicken`, `egg` | Huevos (nombres finales no leídos en `data.yaml`) | `egg`, `crack` | `normal`, `cracked` |
 | Escenario | Granja / nido / suelo | Bandeja o cartón | Inspección de grietas | Cinta industrial |
-| ¿Principal de detección hoy? | **No** | Complementario | Complementario | Candidato técnico principal **pendiente de licencia** |
+| ¿Principal de detección hoy? | **No** | Complementario | **Principal inicial** (cumple ≥ 800) | Candidato técnico **pendiente de licencia** |
 | Descargado | No | No | No | No |
 
 Frente a Egg-Detection e INDIGO, PoultryVision gana en **volumen declarado**. Pierde en
@@ -239,11 +241,11 @@ BLOQUEADO POR:
   3. Recuento de imágenes que contienen huevos: desconocido.
   4. Dominio de granja/gallina, no de clasificación de huevos en línea.
 
-REPARTO ACTUAL (sin cambio respecto a docs/09, salvo este candidato nuevo):
-  PoultryVision-Dataset = PENDIENTE (no principal)
+REPARTO ACTUAL (docs/09 sección 12; umbral vigente ≥ 800):
+  INDIGO                = PRINCIPAL INICIAL (840, CC BY 4.0; cumple el requisito)
   Egg-Detection         = complementario (51, MIT)
-  INDIGO                = complementario (840, CC BY 4.0)
-  egg_dataset Ahmed Raza = CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA
+  PoultryVision-Dataset = PENDIENTE (no principal)
+  egg_dataset Ahmed Raza = CANDIDATO TÉCNICO — PENDIENTE DE LICENCIA
 
 NO DESCARGAR.
 NO ENTRENAR.
@@ -251,5 +253,5 @@ NO ENTRENAR.
 
 **Siguiente paso (si se insiste en este conjunto):** esperar a que el repositorio sea
 público, leer `cardData.license` y el árbol de archivos, y **solo entonces** contar cuántas
-imágenes tienen al menos una caja `egg`. Hasta esa fecha, el camino verificable de detección
-sigue siendo Egg-Detection + INDIGO + capturas propias, con Ahmed Raza pendiente de licencia.
+imágenes tienen al menos una caja `egg`. El dataset principal inicial vigente es INDIGO;
+Ahmed Raza sigue pendiente de licencia.

@@ -21,8 +21,10 @@ Queda fijada, de forma **provisional**, la pila con la que se implementará el M
 - cómo se sirve la inferencia;
 - con qué cliente se muestra el resultado.
 
-Siguen abiertas la licencia de `egg_dataset` y el recuento de ≥ 1.000 imágenes reales. **Sin
-esas dos condiciones no se entrena.**
+Sigue abierta la licencia de `egg_dataset`. El recuento académico quedó resuelto: posteriormente,
+el profesor confirmó que un conjunto de al menos 800 imágenes es aceptable. Por tanto, INDIGO
+con 840 imágenes cumple el requisito académico y es el dataset principal inicial. **No se
+entrena hasta descargar e inspeccionar INDIGO.**
 
 ---
 
@@ -60,7 +62,7 @@ predice el estado; el clasificador no localiza huevos.
 
 | Papel | Variante | Cuándo |
 | --- | --- | --- |
-| Baseline inicial | **YOLOv8n** (nano) | Primera corrida de entrenamiento, cuando existan ≥ 1.000 imágenes reales |
+| Baseline inicial | **YOLOv8n** (nano) | Primera corrida, después de descargar e inspeccionar INDIGO (840 imágenes; cumple el umbral de 800) |
 | Comparación futura | **YOLOv8s** (small) | Después, si hay GPU y tiempo |
 
 YOLOv8n se elige como baseline porque es la variante más ligera de la familia: cabe en Colab
@@ -85,12 +87,13 @@ https://platform.ultralytics.com/ahmed-raza/datasets/eggdataset) queda así:
 CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA.
 ```
 
-**No está aprobado.** La ficha no muestra licencia. No se descarga. No se usa para entrenar.
+`egg_dataset` **no está aprobado.** La ficha no muestra licencia. No se descarga. No se usa
+para entrenar.
 
-Mientras la licencia no se verifique, el camino con fuentes ya aprobadas sigue siendo el de
-[`09-revision-datasets-requisito-1000.md`](09-revision-datasets-requisito-1000.md):
-Egg-Detection (complementario, 51, MIT) + INDIGO (840, CC BY 4.0) + capturas propias, hasta
-≥ 1.000 imágenes reales.
+El dataset **principal inicial** es INDIGO (840, CC BY 4.0). Posteriormente, el profesor
+confirmó que un conjunto de al menos 800 imágenes es aceptable; INDIGO cumple ese umbral. Ver
+[`09-revision-datasets-requisito-1000.md`](09-revision-datasets-requisito-1000.md), sección 12.
+Egg-Detection (51, MIT) sigue como complementario.
 
 ---
 
@@ -162,6 +165,6 @@ CLIENTE:
     (no implementado)
 ```
 
-**Siguiente paso técnico:** no entrenar. Resolver la licencia de `egg_dataset` o completar
-≥ 1.000 imágenes reales por el camino ya aprobado, y recién entonces preparar el notebook de
-Colab con YOLOv8n.
+**Siguiente paso técnico:** no entrenar. Descargar e inspeccionar INDIGO
+(`scripts/download_indigo_dataset.py`). `egg_dataset` sigue pendiente de licencia y no cubre
+cantidad.

@@ -4,9 +4,13 @@
 > contiene únicamente este archivo. Las cantidades marcadas como *verificadas* se completarán
 > después de ejecutar `scripts/download_detection_dataset.py`.
 >
-> **Requisito académico (añadido después):** el entrenamiento exige ≥ 1.000 imágenes reales.
+> **Requisito académico (añadido después):** el entrenamiento exigía ≥ 1.000 imágenes reales.
 > Este conjunto tiene 51 imágenes y se conserva como **complementario**, no como fuente principal.
-> Ver [`../../../docs/09-revision-datasets-requisito-1000.md`](../../../docs/09-revision-datasets-requisito-1000.md).
+> Posteriormente, el profesor confirmó que un conjunto de al menos 800 imágenes es aceptable.
+> Por tanto, INDIGO con 840 imágenes cumple el requisito académico y es el dataset principal
+> inicial. Ver
+> [`../../../docs/09-revision-datasets-requisito-1000.md`](../../../docs/09-revision-datasets-requisito-1000.md),
+> sección 12.
 
 ---
 
@@ -107,8 +111,8 @@ es uno de los tres conjuntos con licencia verificada y aprobados para descarga. 
 
 **1. Volumen pequeño de imágenes, más objetos anotados.** 51 fotografías con 423 cajas. Hay
 pocas escenas distintas, pero bastantes instancias de huevo. Es un baseline utilizable, no una
-fuente única. Habrá que complementarlo con INDIGO (840 imágenes, CC BY 4.0) y con capturas
-propias del escenario de banda.
+fuente única. El dataset principal inicial es INDIGO (840 imágenes, CC BY 4.0). Este conjunto
+sigue como complementario.
 
 **2. La partición `val` original es inutilizable: 2 imágenes.** No permite validar nada. Se
 rehará la división `train` / `validation` / `test` en la preparación del conjunto, respetando la

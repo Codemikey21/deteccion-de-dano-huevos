@@ -492,3 +492,16 @@ todavía por debajo del mínimo.
 Antes de entrenar, el conjunto de entrenamiento (detección y, por separado, estado) debe
 reunir **≥ 1.000 imágenes reales**. El *augmentation* no cuenta. La captura propia sigue
 obligatoria y puede completar el recuento junto con fuentes públicas.
+
+---
+
+## 9. Actualización: umbral de 800 imágenes (decisión vigente)
+
+> **Trazabilidad.** La sección 8 registra el requisito de 1.000 imágenes. Posteriormente, el
+> profesor confirmó que un conjunto de al menos 800 imágenes es aceptable. Por tanto, INDIGO
+> con 840 imágenes cumple el requisito académico.
+
+INDIGO (CC BY 4.0, DOI `10.6084/m9.figshare.21568425.v1`) es el **dataset principal inicial**.
+Se descarga a `data/raw/indigo/` con `scripts/download_indigo_dataset.py`. Egg-Detection sigue
+como complementario. No se busca más material por cantidad y no se prepara captura propia para
+completar un mínimo de recuento.

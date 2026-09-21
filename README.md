@@ -75,7 +75,10 @@ como *candidata* todavía no están decididas.
 La arquitectura es **modular**: detector de huevos, clasificador de estado visual y
 extensiones posteriores. El detalle está en
 [`docs/10-decision-tecnica-provisional.md`](docs/10-decision-tecnica-provisional.md).
-**No hay modelo entrenado.** El conjunto `egg_dataset` de Ahmed Raza es
+**No hay modelo entrenado.** El dataset **principal inicial** es INDIGO Crack Detection (840
+imágenes, CC BY 4.0): posteriormente, el profesor confirmó que un conjunto de al menos 800
+imágenes es aceptable, y por tanto INDIGO cumple el requisito académico. Todavía **no está
+descargado**. El conjunto `egg_dataset` de Ahmed Raza sigue como
 **CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA**: no está aprobado ni descargado.
 
 ## 4. Estructura del repositorio

@@ -443,6 +443,18 @@ alcanzar el recuento.
 **DATASET PRINCIPAL DE DETECCIÓN:** pendiente (ver `docs/09`). El camino verificable más corto
 hoy es INDIGO (840) + Egg-Detection (51) = 891, más capturas propias u otra fuente verificada.
 
+## 6.2 Actualización: umbral de 800 imágenes
+
+> **Trazabilidad.** Inicialmente se seleccionó Egg-Detection como candidato principal;
+> posteriormente, al conocerse el requisito de mínimo 1.000 imágenes, se reclasificó como
+> complementario. Posteriormente, el profesor confirmó que un conjunto de al menos 800 imágenes
+> es aceptable. Por tanto, INDIGO con 840 imágenes cumple el requisito académico.
+
+INDIGO pasa a ser el **dataset principal inicial**. Egg-Detection se conserva como
+complementario. **No** hay que completar cantidad con captura propia ni buscar más conjuntos
+por volumen. El detalle está en
+[`09-revision-datasets-requisito-1000.md`](09-revision-datasets-requisito-1000.md), sección 12.
+
 ---
 
 ## 7. Verificaciones obligatorias antes de descargar

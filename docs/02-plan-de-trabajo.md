@@ -73,9 +73,10 @@ si hay recursos. Ver [`10-decision-tecnica-provisional.md`](10-decision-tecnica-
 
 El clasificador de estado **sigue pendiente**.
 
-**No se entrena en esta fase del plan hasta** tener ≥ 1.000 imágenes reales y una fuente de
-detección con licencia usable. `egg_dataset` (Ahmed Raza) es
-**CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA**.
+**No se entrena en esta fase del plan** hasta descargar e inspeccionar INDIGO. Posteriormente,
+el profesor confirmó que un conjunto de al menos 800 imágenes es aceptable. Por tanto, INDIGO
+con 840 imágenes (CC BY 4.0) cumple el requisito académico y es el **dataset principal inicial**.
+`egg_dataset` (Ahmed Raza) sigue **PENDIENTE DE LICENCIA** y no se usa para cubrir cantidad.
 
 Se crea: `training/`, `models/`.
 Se agrega a `requirements.txt`: la librería de la familia YOLO que se instale en esa fase y

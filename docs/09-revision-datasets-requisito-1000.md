@@ -9,6 +9,11 @@ Documentos relacionados: [`03-estrategia-dataset.md`](03-estrategia-dataset.md) 
 
 > **No se ha descargado ningún conjunto nuevo.** Esta investigación consulta metadatos y fichas
 > públicas. `scripts/download_detection_dataset.py` y `data/raw/detection/` **se conservan**.
+>
+> **Actualización posterior (21/09/2026).** El profesor confirmó que un conjunto de al menos
+> 800 imágenes es aceptable. Por tanto, INDIGO con 840 imágenes cumple el requisito académico.
+> El texto de las secciones 1 a 11 se conserva como registro del requisito anterior de 1.000.
+> La decisión vigente está en la sección 12.
 
 ---
 
@@ -399,6 +404,49 @@ La pila de implementación (decisión técnica provisional: YOLOv8n, Colab, Fast
 [`10-decision-tecnica-provisional.md`](10-decision-tecnica-provisional.md).
 **No se entrena todavía.**
 
-**Siguiente paso:** verificar a mano la licencia y las clases de `egg_dataset` y de las fichas
-Roboflow de ≥ 1.000 imágenes; no entrenar hasta que el recuento de imágenes **reales** del
-conjunto de entrenamiento sea ≥ 1.000.
+**Siguiente paso (histórico de esta revisión):** verificar a mano la licencia y las clases de
+`egg_dataset` y de las fichas Roboflow de ≥ 1.000 imágenes; no entrenar hasta que el recuento
+de imágenes **reales** del conjunto de entrenamiento sea ≥ 1.000.
+
+---
+
+## 12. Actualización: umbral de 800 imágenes (decisión vigente)
+
+> **Trazabilidad.** El requisito documentado en las secciones 1 a 11 era ≥ 1.000 imágenes
+> reales. Posteriormente, el profesor confirmó que un conjunto de al menos 800 imágenes es
+> aceptable. Por tanto, INDIGO con 840 imágenes cumple el requisito académico.
+
+Consecuencias, **sin borrar** las decisiones anteriores:
+
+| Antes (secciones 1–11) | Ahora |
+| --- | --- |
+| INDIGO (840) no alcanza el mínimo | INDIGO **sí cumple** el requisito académico |
+| Faltaban ≥ 109 imágenes para llegar a 1.000 | **No** hay que completar cantidad con captura propia |
+| Dataset principal de detección: pendiente / Ahmed Raza | **INDIGO es el dataset principal inicial** |
+| Egg-Detection: complementario | Sigue **complementario** (51 imágenes) |
+| Ahmed Raza: candidato técnico principal pendiente de licencia | Sigue **pendiente de licencia**; no se busca otro dataset por cantidad |
+
+No se buscan más conjuntos por volumen. No se prepara captura propia para completar un mínimo
+de cantidad. La captura propia de `sucio` y `danado` (clases sin fuente pública aprobada) es
+un asunto distinto, de taxonomía, y no forma parte de este recuento.
+
+```
+DATASET PRINCIPAL INICIAL (detección y grieta):
+    INDIGO Crack Detection
+    840 imágenes (740 train / 100 test), CC BY 4.0
+    figshare DOI 10.6084/m9.figshare.21568425.v1
+    CUMPLE el requisito académico (≥ 800).
+    NO DESCARGADO TODAVÍA.
+    Script: scripts/download_indigo_dataset.py
+    Destino: data/raw/indigo/
+
+Egg-Detection:
+    complementario (51, MIT)
+
+Ahmed Raza egg_dataset:
+    CANDIDATO TÉCNICO PRINCIPAL — PENDIENTE DE LICENCIA
+    no aprobado, no descargado
+    no se usa para cubrir cantidad
+
+NO ENTRENAR hasta descargar e inspeccionar INDIGO.
+```
