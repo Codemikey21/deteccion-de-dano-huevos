@@ -3,36 +3,57 @@
 El proyecto avanza por fases. Cada fase crea únicamente las carpetas y dependencias que
 necesita, de modo que el historial de commits refleje el avance real del trabajo.
 
-> **Este documento es planificación.** Salvo la Fase 0, ninguna de las fases descritas está
-> implementada todavía: no hay conjunto de datos, ni modelo entrenado, ni aplicación. Cada
-> fase se desarrollará mediante commits pequeños y coherentes, y su contenido podrá ajustarse
-> según lo que se encuentre al avanzar.
+> **Este documento es planificación.** Está completada la Fase 0 y, de la Fase 1, únicamente su
+> primer subpaso. Todo lo demás está pendiente: no hay conjunto de datos, ni modelo entrenado,
+> ni aplicación. Cada fase se desarrollará mediante commits pequeños y coherentes, y su
+> contenido podrá ajustarse según lo que se encuentre al avanzar.
 
 ---
 
 ## Fases
 
-### Fase 0 — Preparación del repositorio *(actual)*
+### Fase 0 — Preparación del repositorio *(completada)*
 
 Estructura base, documentación del alcance y configuración de Git.
 
 Se crea: `data/raw/`, `data/processed/`, `docs/`, `README.md`, `requirements.txt`,
 `.gitignore`, `.gitattributes`, `.env.example`.
 
-### Fase 1 — Construcción del conjunto de datos
+### Fase 1 — Estrategia y construcción del conjunto de datos *(en curso)*
 
-Captura de imágenes de huevos con la cámara y organización del material recolectado.
+**La captura de imágenes es un subpaso de esta fase, no toda la fase.** Antes de recolectar
+material hay que decidir qué material se necesita, y antes de etiquetarlo hay que saber qué
+significan las categorías. Los subpasos 1 a 5 son de investigación y decisión: no producen
+datos. Los subpasos 6 a 8 son los primeros que generan archivos dentro de `data/raw/`.
 
-Se crea: `scripts/` (utilidades de captura y de organización de imágenes).
+| # | Subpaso | Estado |
+| --- | --- | --- |
+| 1 | Definir la estrategia del conjunto de datos | **Hecho** → [`03-estrategia-dataset.md`](03-estrategia-dataset.md) |
+| 2 | Investigar conjuntos de datos públicos reales | Pendiente |
+| 3 | Validar las categorías de clasificación | Pendiente |
+| 4 | Decidir qué información puede obtenerse visualmente | Pendiente |
+| 5 | Definir los criterios de etiquetado | Pendiente |
+| 6 | Recolectar imágenes propias, si es necesario | Pendiente |
+| 7 | Incorporar los conjuntos de datos públicos seleccionados | Pendiente |
+| 8 | Organizar las imágenes originales | Pendiente |
+
+**Todavía no existe un conjunto de datos definitivo**, ni se ha descargado ni capturado ninguna
+imagen. El subpaso 3 recoge la validación de las categorías de tipo que quedó pendiente en
+[`01-alcance-del-proyecto.md`](01-alcance-del-proyecto.md), sección 3b.
+
+Se crea: `scripts/` (utilidades de captura y de organización de imágenes), **únicamente cuando
+comience la captura o la organización de datos**, es decir en los subpasos 6 a 8. Mientras la
+fase siga en investigación y documentación, la carpeta no se crea. También `data/raw/public/` y
+`data/raw/own/`, cuando se incorpore material de cada origen.
 Se agrega a `requirements.txt`: ya cubierto (OpenCV, NumPy).
 
 ### Fase 2 — Etiquetado y preparación de datos
 
-Validación previa de las categorías de tipo (ver
-[`01-alcance-del-proyecto.md`](01-alcance-del-proyecto.md), sección 3b): no se puede etiquetar
-hasta saber si "Triple A", "criollo" y "semicriollo" pertenecen al mismo eje de clasificación.
-Definido el esquema de etiquetas, se etiqueta por estado y por tipo y se exportan las
-particiones de entrenamiento, validación y prueba.
+Requiere que los subpasos 3 a 5 de la Fase 1 estén cerrados: no se puede etiquetar sin un
+esquema de etiquetas ya validado. Con ese esquema definido, se anotan las imágenes por estado y
+por tipo y se exportan las particiones de entrenamiento, validación y prueba, respetando la
+regla de agrupación por huevo y por secuencia de video descrita en
+[`03-estrategia-dataset.md`](03-estrategia-dataset.md), sección 8.
 
 Se crea: `data/train/`, `data/validation/`, `data/test/`.
 
@@ -85,7 +106,10 @@ Se crea: `frontend/`.
 Despliegue en una instancia EC2 del AWS Academy Learner Lab y documentación del
 procedimiento para recrearlo.
 
-Se crea: `deploy/` y `docs/03-despliegue.md`.
+Se crea: `deploy/` y `docs/despliegue-aws.md`.
+
+Los documentos que todavía no existen se nombran de forma descriptiva y sin número, para no
+depender de una numeración rígida que puede chocar con los documentos que se creen antes.
 
 ---
 
@@ -120,7 +144,8 @@ Fase en la que se crea cada carpeta:
 | Carpeta | Fase |
 | --- | --- |
 | `data/raw/`, `data/processed/`, `docs/` | 0 (existen) |
-| `scripts/` | 1 |
+| `data/raw/public/`, `data/raw/own/` | 1, al incorporar material de cada origen |
+| `scripts/` | 1, solo al comenzar la captura u organización (subpasos 6 a 8) |
 | `data/train/`, `data/validation/`, `data/test/` | 2 |
 | `notebooks/` | 3 |
 | `training/`, `models/` | 4 |
