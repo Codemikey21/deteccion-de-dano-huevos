@@ -1,0 +1,22 @@
+# Normaliza los finales de linea al guardar en el repositorio.
+# Evita diffs completos falsos al trabajar desde Windows (CRLF) y Linux/EC2 (LF).
+* text=auto
+
+*.py   text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.sh   text eol=lf
+*.ps1  text eol=crlf
+
+# Archivos binarios: Git no debe intentar convertirlos ni diferenciarlos.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.mp4  binary
+*.h5   binary
+*.keras binary
+*.tflite binary
+*.onnx binary

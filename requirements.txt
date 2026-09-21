@@ -1,0 +1,14 @@
+# Dependencias de la FASE ACTUAL (preparación del entorno y captura de imágenes).
+#
+# Las librerías de fases posteriores se agregan en el commit de la fase que las
+# usa por primera vez, no antes:
+#   - Fase de exploración: pandas, matplotlib, seaborn
+#   - Fase de modelado:    la librería de aprendizaje profundo que se seleccione
+#   - Fase de backend:     fastapi, uvicorn, python-multipart
+#
+# Las versiones se fijarán exactas (pip freeze) cuando el entorno virtual esté
+# creado y validado. Por ahora se declara la versión mínima compatible.
+
+numpy>=1.26
+opencv-python>=4.9
+python-dotenv>=1.0

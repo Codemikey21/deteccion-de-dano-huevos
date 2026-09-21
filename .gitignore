@@ -1,0 +1,85 @@
+# ---------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+
+# Herramientas de calidad y pruebas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ---------------------------------------------------------------
+# Notebooks
+# ---------------------------------------------------------------
+.ipynb_checkpoints/
+
+# ---------------------------------------------------------------
+# Datos
+# Las imagenes NO se versionan en Git: pesan demasiado y el dataset
+# se reconstruye desde su fuente (Roboflow / capturas propias).
+# Se conservan los README y los .gitkeep para preservar la estructura.
+# ---------------------------------------------------------------
+data/**
+!data/**/
+!data/**/.gitkeep
+!data/**/README.md
+!data/README.md
+
+# ---------------------------------------------------------------
+# Modelos entrenados y artefactos de entrenamiento
+# ---------------------------------------------------------------
+models/**
+!models/**/
+!models/**/.gitkeep
+!models/README.md
+*.h5
+*.keras
+*.pt
+*.pth
+*.onnx
+*.tflite
+*.pb
+*.weights
+runs/
+logs/
+checkpoints/
+
+# ---------------------------------------------------------------
+# Secretos y configuracion local
+# .env.example SI se versiona; .env NUNCA.
+# ---------------------------------------------------------------
+.env
+.env.local
+*.pem
+*.key
+credentials
+credentials.json
+
+# ---------------------------------------------------------------
+# Editores y sistema operativo
+# ---------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
