@@ -13,10 +13,14 @@ export interface MappedBBox extends BBox {
 }
 
 /**
- * Convierte un bbox del espacio de coordenadas de la imagen original
+ * Convierte un bbox del espacio de coordenadas de la imagen inferida
  * al espacio visible de la preview de cámara.
  *
- * Soporta modos cover (recorte centrado) y contain (letterboxing).
+ * Modo `cover` (default): escala uniforme max(wRatio, hRatio) y recorta
+ * centrado — equivalente a object-fit: cover. Los offsets corrigen el
+ * recorte para que las boxes coincidan con lo visible en pantalla.
+ *
+ * Modo `contain`: letterboxing centrado (object-fit: contain).
  */
 export function mapBboxToPreview(
   bbox: BBox,

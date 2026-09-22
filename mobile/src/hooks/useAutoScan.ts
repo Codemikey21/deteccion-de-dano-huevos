@@ -13,38 +13,70 @@ import { SCAN_INTERVAL_MS } from '../constants/config';
 import { predictImage } from '../services/api';
 import type { PredictionResponse } from '../types/prediction';
 
+export interface ScanMetrics {
+  captureMs: number;
+  inferenceMs: number;
+  cycleMs: number;
+}
+
 export interface UseAutoScanOptions {
   cameraRef: RefObject<CameraView | null>;
-  /** Desactivado por defecto hasta validar el flujo end-to-end. */
+  /** Esperar onCameraReady antes de capturar. */
+  cameraReady: boolean;
   enabled?: boolean;
   intervalMs?: number;
 }
 
 export interface UseAutoScanResult {
-  enabled: boolean;
-  setEnabled: Dispatch<SetStateAction<boolean>>;
+  autoScanEnabled: boolean;
+  setAutoScanEnabled: Dispatch<SetStateAction<boolean>>;
   isProcessing: boolean;
-  lastResult: PredictionResponse | null;
-  lastError: string | null;
-  /** Disparo manual de un ciclo (útil para pruebas). */
-  captureOnce: () => Promise<void>;
+  prediction: PredictionResponse | null;
+  error: string | null;
+  lastInferenceMs: number | null;
+  metrics: ScanMetrics | null;
+}
+
+const CAMERA_CAPTURE_BACKOFF_MS = 2000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isCameraCaptureError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes('Image could not be captured') ||
+    message.includes('CameraImageCaptureException')
+  );
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Error de inferencia';
 }
 
 /**
- * Hook preparado para auto-detección periódica.
- * Evita requests simultáneos y deja listo el envío a POST /predict.
+ * Auto-detección periódica: captura frame → POST /predict → actualiza estado.
+ * Un solo request in-flight; el intervalo corre entre ciclos completos.
  */
 export function useAutoScan({
   cameraRef,
+  cameraReady,
   enabled: enabledProp = false,
   intervalMs = SCAN_INTERVAL_MS,
 }: UseAutoScanOptions): UseAutoScanResult {
-  const [enabled, setEnabled] = useState(enabledProp);
+  const [autoScanEnabled, setAutoScanEnabled] = useState(enabledProp);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [lastResult, setLastResult] = useState<PredictionResponse | null>(null);
-  const [lastError, setLastError] = useState<string | null>(null);
+  const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [lastInferenceMs, setLastInferenceMs] = useState<number | null>(null);
+  const [metrics, setMetrics] = useState<ScanMetrics | null>(null);
+
   const inFlightRef = useRef(false);
   const mountedRef = useRef(true);
+  const enabledRef = useRef(autoScanEnabled);
+  const lastLoggedErrorRef = useRef<string | null>(null);
+  enabledRef.current = autoScanEnabled;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -53,72 +85,125 @@ export function useAutoScan({
     };
   }, []);
 
-  const captureOnce = useCallback(async () => {
-    if (inFlightRef.current) {
+  const logCycleWarning = useCallback((message: string) => {
+    if (!__DEV__ || lastLoggedErrorRef.current === message) {
       return;
+    }
+    lastLoggedErrorRef.current = message;
+    console.warn('[EggVision] cycle error:', message);
+  }, []);
+
+  const runCycle = useCallback(async (): Promise<number> => {
+    if (inFlightRef.current || !cameraReady) {
+      return intervalMs;
     }
 
     const camera = cameraRef.current;
     if (!camera) {
+      const message = 'CameraView no está lista';
       if (mountedRef.current) {
-        setLastError('Cámara no disponible');
+        setError(message);
       }
-      return;
+      logCycleWarning(message);
+      return intervalMs;
     }
 
     inFlightRef.current = true;
     if (mountedRef.current) {
       setIsProcessing(true);
-      setLastError(null);
     }
 
+    const cycleStart = Date.now();
+    let captureMs = 0;
+
     try {
+      const captureStart = Date.now();
       const photo = await camera.takePictureAsync({
-        quality: 0.6,
-        skipProcessing: true,
+        quality: 0.5,
+        skipProcessing: false,
+        base64: false,
+        exif: false,
       });
+      captureMs = Date.now() - captureStart;
 
       if (!photo?.uri) {
         throw new Error('No se pudo capturar el frame');
       }
 
       const response = await predictImage({ uri: photo.uri });
+      const cycleMs = Date.now() - cycleStart;
+
       if (mountedRef.current) {
-        setLastResult(response);
+        setPrediction(response);
+        setLastInferenceMs(response.inference_ms);
+        setError(null);
+        setMetrics({
+          captureMs,
+          inferenceMs: response.inference_ms,
+          cycleMs,
+        });
       }
-    } catch (error) {
+
+      lastLoggedErrorRef.current = null;
+
+      if (__DEV__) {
+        console.log(
+          `[EggVision] cycle capture=${captureMs}ms inference=${response.inference_ms}ms total=${cycleMs}ms detections=${response.detections.length}`,
+        );
+      }
+
+      return intervalMs;
+    } catch (cycleError) {
+      const message = getErrorMessage(cycleError);
+
       if (mountedRef.current) {
-        const message = error instanceof Error ? error.message : 'Error de inferencia';
-        setLastError(message);
+        setError(message);
       }
+
+      logCycleWarning(message);
+
+      return isCameraCaptureError(cycleError) ? CAMERA_CAPTURE_BACKOFF_MS : intervalMs;
     } finally {
       inFlightRef.current = false;
       if (mountedRef.current) {
         setIsProcessing(false);
       }
     }
-  }, [cameraRef]);
+  }, [cameraRef, cameraReady, intervalMs, logCycleWarning]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!autoScanEnabled || !cameraReady) {
       return;
     }
 
-    const timer = setInterval(() => {
-      if (!inFlightRef.current) {
-        void captureOnce();
-      }
-    }, intervalMs);
+    let active = true;
 
-    return () => clearInterval(timer);
-  }, [enabled, intervalMs, captureOnce]);
+    const loop = async () => {
+      await sleep(intervalMs);
+
+      while (active && enabledRef.current) {
+        const delayMs = await runCycle();
+        if (!active || !enabledRef.current) {
+          break;
+        }
+        await sleep(delayMs);
+      }
+    };
+
+    void loop();
+
+    return () => {
+      active = false;
+    };
+  }, [autoScanEnabled, cameraReady, intervalMs, runCycle]);
 
   return {
-    enabled,
-    setEnabled,
+    autoScanEnabled,
+    setAutoScanEnabled,
     isProcessing,
-    lastResult,
-    lastError,
-    captureOnce,
+    prediction,
+    error,
+    lastInferenceMs,
+    metrics,
   };
 }

@@ -4,7 +4,11 @@ export type DetectionStatus = 'approved' | 'rejected' | 'unknown';
 /** Ruta sugerida por el backend para el flujo operativo. */
 export type DetectionRoute = 'accept' | 'reject' | 'review';
 
-export type DetectionReason = 'no_crack_detected' | 'crack_detected' | 'egg_not_detected';
+export type DetectionReason =
+  | 'no_crack_detected'
+  | 'crack_detected'
+  | 'egg_not_detected'
+  | 'crack_without_confirmed_egg';
 
 export interface BBox {
   x1: number;

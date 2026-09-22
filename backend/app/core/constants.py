@@ -26,5 +26,6 @@ ROUTE_REVIEW = "review"
 REASON_NO_CRACK = "no_crack_detected"
 REASON_CRACK = "crack_detected"
 REASON_NO_EGG = "egg_not_detected"
+REASON_CRACK_WITHOUT_EGG = "crack_without_confirmed_egg"
 
 ALLOWED_IMAGE_MEDIA_TYPES = frozenset({"image/jpeg", "image/png", "image/jpg"})

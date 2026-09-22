@@ -1,3 +1,6 @@
+import { File } from 'expo-file-system';
+import { fetch } from 'expo/fetch';
+
 import { API_REQUEST_TIMEOUT_MS, assertApiBaseUrl } from '../constants/config';
 import type { HealthResponse, PredictionResponse } from '../types/prediction';
 
@@ -24,7 +27,7 @@ function logDevSuccess(label: string): void {
 function logDevError(label: string, error: unknown): void {
   if (__DEV__) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`[EggVision] ${label}:`, message);
+    console.warn(`[EggVision] ${label}:`, message);
   }
 }
 
@@ -91,21 +94,30 @@ export async function healthCheck(): Promise<HealthResponse> {
 
 export interface PredictImageInput {
   uri: string;
-  mimeType?: 'image/jpeg' | 'image/png';
-  fileName?: string;
+}
+
+function createUploadFile(imageUri: string): File {
+  const file = new File(imageUri);
+
+  if (__DEV__) {
+    console.log(
+      `[EggVision] upload uri=${file.uri} exists=${file.exists} size=${file.size ?? 'unknown'}`,
+    );
+  }
+
+  if (!file.exists) {
+    throw new ApiError('La imagen capturada no existe en disco', 0);
+  }
+
+  return file;
 }
 
 export async function predictImage(input: PredictImageInput): Promise<PredictionResponse> {
   const baseUrl = assertApiBaseUrl();
-  const mimeType = input.mimeType ?? 'image/jpeg';
-  const fileName = input.fileName ?? 'frame.jpg';
+  const file = createUploadFile(input.uri);
 
   const formData = new FormData();
-  formData.append('file', {
-    uri: input.uri,
-    type: mimeType,
-    name: fileName,
-  } as unknown as Blob);
+  formData.append('file', file);
 
   try {
     const response = await fetchWithTimeout(`${baseUrl}/predict`, {

@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     model_path: Path = Field(default=REPO_ROOT / "backend" / "models" / "best.pt")
     model_confidence: float = Field(default=0.25, ge=0.0, le=1.0)
-    crack_confidence: float = Field(default=0.25, ge=0.0, le=1.0)
+    crack_confidence: float = Field(default=0.60, ge=0.0, le=1.0)
     cors_origins: str = Field(default="*")
 
     @field_validator("model_path", mode="before")

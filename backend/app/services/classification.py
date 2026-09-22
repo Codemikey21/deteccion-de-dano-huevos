@@ -6,6 +6,7 @@ from backend.app.core.constants import (
     CLASS_ID_CRACK,
     CLASS_ID_EGG,
     REASON_CRACK,
+    REASON_CRACK_WITHOUT_EGG,
     REASON_NO_CRACK,
     REASON_NO_EGG,
     ROUTE_ACCEPT,
@@ -42,9 +43,10 @@ def classify_detections(
     """Determina estado operativo a partir de detecciones del modelo.
 
     Reglas:
-    - ``rejected`` si hay ``crack`` con confidence >= crack_confidence_threshold.
+    - ``rejected`` si hay ``egg`` y ``crack`` válido (confidence >= umbral).
+    - ``unknown`` / ``review`` si hay ``crack`` válido pero no hay ``egg``.
     - ``approved`` si hay ``egg`` y no hay crack válido.
-    - ``unknown`` si no hay ``egg``.
+    - ``unknown`` si no hay ``egg`` ni crack válido.
 
     Nota: ``approved`` significa solo "huevo detectado sin grieta visible según este
     modelo". No implica calidad comercial, peso, suciedad ni otras clases ausentes
@@ -59,12 +61,21 @@ def classify_detections(
     ]
     crack_detected = len(valid_cracks) > 0
 
+    if crack_detected and not egg_detected:
+        return ClassificationResult(
+            status=STATUS_UNKNOWN,
+            route=ROUTE_REVIEW,
+            reason=REASON_CRACK_WITHOUT_EGG,
+            egg_detected=False,
+            crack_detected=True,
+        )
+
     if crack_detected:
         return ClassificationResult(
             status=STATUS_REJECTED,
             route=ROUTE_REJECT,
             reason=REASON_CRACK,
-            egg_detected=egg_detected,
+            egg_detected=True,
             crack_detected=True,
         )
 
