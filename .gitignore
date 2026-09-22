@@ -44,6 +44,13 @@ data/**
 !data/README.md
 
 # ---------------------------------------------------------------
+# Backend — pesos locales (copiar manualmente best.pt)
+# ---------------------------------------------------------------
+backend/models/*.pt
+backend/models/*.pth
+backend/.env
+
+# ---------------------------------------------------------------
 # Modelos entrenados y artefactos de entrenamiento
 # ---------------------------------------------------------------
 models/**

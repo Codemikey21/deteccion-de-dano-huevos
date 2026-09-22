@@ -1,0 +1,9 @@
+# Backend Egg Detection API — dependencias mínimas
+fastapi
+uvicorn[standard]
+ultralytics
+python-multipart
+pillow
+pydantic-settings
+pytest
+httpx
