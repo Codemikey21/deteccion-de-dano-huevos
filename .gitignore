@@ -49,6 +49,9 @@ data/**
 backend/models/*.pt
 backend/models/*.pth
 backend/.env
+mobile/.env
+mobile/node_modules/
+mobile/.expo/
 
 # ---------------------------------------------------------------
 # Modelos entrenados y artefactos de entrenamiento
