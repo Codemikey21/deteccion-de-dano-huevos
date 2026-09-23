@@ -12,9 +12,10 @@ import {
 
 import { DetectionOverlay } from '../src/components/DetectionOverlay';
 import { useAutoScan } from '../src/hooks/useAutoScan';
-import { useStabilizedClassification } from '../src/hooks/useStabilizedClassification';
-import type { PreviewSize } from '../src/utils/bbox';
+import { useEggVision } from '../src/hooks/useEggVision';
+import type { PreviewSize } from '../src/utils/bboxTransform';
 import { formatDetectionsSummary } from '../src/utils/formatDetections';
+import { resolvePrimaryEgg } from '../src/utils/resolvePrimaryEgg';
 
 function scanStatusLabel(options: {
   cameraReady: boolean;
@@ -57,10 +58,17 @@ export default function ScanScreen() {
     cameraReady,
   });
 
-  const { stabilized, windowLabel } = useStabilizedClassification(
-    prediction,
-    autoScanEnabled,
-  );
+  const {
+    trackedEgg,
+    currentFrame,
+    temporal,
+    temporalCracksLabel,
+    displayStatus,
+    crackEvidence,
+    visualBoxes,
+    bboxDebug,
+    associatedCracks,
+  } = useEggVision(prediction, previewSize, autoScanEnabled);
 
   const handlePreviewLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -90,6 +98,8 @@ export default function ScanScreen() {
     );
   }
 
+  const resolvedPrimaryEgg = prediction ? resolvePrimaryEgg(prediction) : null;
+
   const statusLabel = scanStatusLabel({
     cameraReady,
     autoScanEnabled,
@@ -114,14 +124,7 @@ export default function ScanScreen() {
           }}
         />
 
-        {prediction && previewSize.width > 0 ? (
-          <DetectionOverlay
-            detections={prediction.detections}
-            imageWidth={prediction.image.width}
-            imageHeight={prediction.image.height}
-            preview={previewSize}
-          />
-        ) : null}
+        <DetectionOverlay visualBoxes={visualBoxes} preview={previewSize} />
       </View>
 
       <View style={styles.debugPanel}>
@@ -136,6 +139,7 @@ export default function ScanScreen() {
         </View>
 
         <Text style={styles.debugLine}>Status: {statusLabel}</Text>
+        <Text style={styles.debugLine}>displayStatus: {displayStatus}</Text>
         <Text style={styles.debugLine}>
           cameraReady: {String(cameraReady)} · isProcessing: {String(isProcessing)}
         </Text>
@@ -143,32 +147,63 @@ export default function ScanScreen() {
         {prediction ? (
           <>
             <Text style={styles.debugLine}>
+              primary egg: {resolvedPrimaryEgg?.confidence.toFixed(2) ?? 'none'}
+              {prediction.primary_egg ? '' : resolvedPrimaryEgg ? ' (legacy fallback)' : ''}
+            </Text>
+            <Text style={styles.debugLine}>
+              egg tracker: {trackedEgg?.phase ?? 'none'} · missed: {trackedEgg?.missedFrames ?? 0}
+              {trackedEgg?.outlierRejected ? ' · outlier' : ''}
+              {trackedEgg?.modelLocalizationError ? ' · MODEL_LOCALIZATION_ERROR' : ''}
+            </Text>
+            <Text style={styles.debugLine}>
               raw detections ({prediction.raw_detections?.length ?? 0}):{' '}
               {formatDetectionsSummary(prediction.raw_detections)}
             </Text>
             <Text style={styles.debugLine}>
-              filtered ({prediction.detections.length}):{' '}
-              {formatDetectionsSummary(prediction.detections)}
-            </Text>
-            <Text style={styles.debugLine}>egg_detected: {String(prediction.egg_detected)}</Text>
-            <Text style={styles.debugLine}>
-              crack_detected: {String(prediction.crack_detected)}
-            </Text>
-            <Text style={styles.debugLine}>raw status: {prediction.status}</Text>
-            <Text style={styles.debugLine}>raw reason: {prediction.reason}</Text>
-            <Text style={styles.debugLine}>
-              stabilized status: {stabilized?.status ?? 'pending'}
+              associated cracks ({associatedCracks.length}):{' '}
+              {formatDetectionsSummary(associatedCracks)}
             </Text>
             <Text style={styles.debugLine}>
-              stabilized route: {stabilized?.route ?? 'pending'}
+              current crack evidence:{' '}
+              {crackEvidence?.level === 'none' || !crackEvidence
+                ? 'none'
+                : `${crackEvidence.level} ${crackEvidence.strongestConfidence?.toFixed(2)}`}
             </Text>
             <Text style={styles.debugLine} numberOfLines={2}>
-              window: {windowLabel || 'empty'}
+              temporal window: {temporalCracksLabel || 'empty'}
             </Text>
             <Text style={styles.debugLine}>
-              votes: approved={stabilized?.approvedVotes ?? 0} rejected=
-              {stabilized?.rejectedVotes ?? 0}
+              weak: {temporal?.weakVotes ?? 0} · strong: {temporal?.strongVotes ?? 0} · very
+              strong: {temporal?.veryStrongVotes ?? 0}
             </Text>
+            <Text style={styles.debugLine}>raw status: {prediction.status}</Text>
+            <Text style={styles.debugLine}>temporal reason: {temporal?.reason ?? 'pending'}</Text>
+
+            {bboxDebug ? (
+              <>
+                <Text style={styles.debugLine}>
+                  source: {bboxDebug.sourceWidth}x{bboxDebug.sourceHeight} · preview:{' '}
+                  {bboxDebug.previewWidth}x{bboxDebug.previewHeight}
+                </Text>
+                <Text style={styles.debugLine}>
+                  orientation: {bboxDebug.orientationFix} · area ratio:{' '}
+                  {bboxDebug.areaRatio.toFixed(3)}
+                </Text>
+                <Text style={styles.debugLine} numberOfLines={2}>
+                  raw bbox px: ({bboxDebug.sourcePixels.x1.toFixed(0)},{' '}
+                  {bboxDebug.sourcePixels.y1.toFixed(0)}) → (
+                  {bboxDebug.sourcePixels.x2.toFixed(0)},{' '}
+                  {bboxDebug.sourcePixels.y2.toFixed(0)})
+                </Text>
+                <Text style={styles.debugLine} numberOfLines={2}>
+                  mapped bbox: ({bboxDebug.mappedPixels.x1.toFixed(0)},{' '}
+                  {bboxDebug.mappedPixels.y1.toFixed(0)}) w=
+                  {bboxDebug.mappedPixels.width.toFixed(0)} h=
+                  {bboxDebug.mappedPixels.height.toFixed(0)}
+                </Text>
+              </>
+            ) : null}
+
             <Text style={styles.debugLine}>
               inference_ms: {lastInferenceMs ?? prediction.inference_ms}
             </Text>
@@ -181,7 +216,10 @@ export default function ScanScreen() {
 
         {metrics ? (
           <Text style={styles.debugMeta}>
-            capture {metrics.captureMs}ms · cycle {metrics.cycleMs}ms
+            capture {metrics.captureMs}ms · preprocess {metrics.preprocessMs}ms · network{' '}
+            {metrics.uploadNetworkMs.toFixed(0)}ms · inference {metrics.serverInferenceMs}ms ·
+            cycle {metrics.cycleMs}ms
+            {metrics.resized ? ' · resized' : ''}
           </Text>
         ) : null}
 

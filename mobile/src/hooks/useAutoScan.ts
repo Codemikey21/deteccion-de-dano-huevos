@@ -12,16 +12,19 @@ import {
 import { SCAN_INTERVAL_MS } from '../constants/config';
 import { predictImage } from '../services/api';
 import type { PredictionResponse } from '../types/prediction';
+import { preprocessCapture } from '../utils/imagePreprocess';
 
 export interface ScanMetrics {
   captureMs: number;
-  inferenceMs: number;
+  preprocessMs: number;
+  uploadNetworkMs: number;
+  serverInferenceMs: number;
   cycleMs: number;
+  resized: boolean;
 }
 
 export interface UseAutoScanOptions {
   cameraRef: RefObject<CameraView | null>;
-  /** Esperar onCameraReady antes de capturar. */
   cameraReady: boolean;
   enabled?: boolean;
   intervalMs?: number;
@@ -56,7 +59,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 /**
- * Auto-detección periódica: captura frame → POST /predict → actualiza estado.
+ * Auto-detección periódica: captura → preprocess → POST /predict → actualiza estado.
  * Un solo request in-flight; el intervalo corre entre ciclos completos.
  */
 export function useAutoScan({
@@ -86,7 +89,7 @@ export function useAutoScan({
   }, []);
 
   const logCycleWarning = useCallback((message: string) => {
-    if (!__DEV__ || lastLoggedErrorRef.current === message) {
+    if (typeof __DEV__ === 'undefined' || !__DEV__ || lastLoggedErrorRef.current === message) {
       return;
     }
     lastLoggedErrorRef.current = message;
@@ -115,12 +118,13 @@ export function useAutoScan({
 
     const cycleStart = Date.now();
     let captureMs = 0;
+    let preprocessMs = 0;
 
     try {
       const captureStart = Date.now();
       const photo = await camera.takePictureAsync({
         quality: 0.5,
-        skipProcessing: false,
+        skipProcessing: true,
         base64: false,
         exif: false,
       });
@@ -130,7 +134,12 @@ export function useAutoScan({
         throw new Error('No se pudo capturar el frame');
       }
 
-      const response = await predictImage({ uri: photo.uri });
+      const preprocessed = await preprocessCapture(photo.uri);
+      preprocessMs = preprocessed.preprocessMs;
+
+      const uploadStart = Date.now();
+      const response = await predictImage({ uri: preprocessed.uri });
+      const uploadNetworkMs = Date.now() - uploadStart - response.inference_ms;
       const cycleMs = Date.now() - cycleStart;
 
       if (mountedRef.current) {
@@ -139,16 +148,19 @@ export function useAutoScan({
         setError(null);
         setMetrics({
           captureMs,
-          inferenceMs: response.inference_ms,
+          preprocessMs,
+          uploadNetworkMs: Math.max(0, uploadNetworkMs),
+          serverInferenceMs: response.inference_ms,
           cycleMs,
+          resized: preprocessed.resized,
         });
       }
 
       lastLoggedErrorRef.current = null;
 
-      if (__DEV__) {
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
         console.log(
-          `[EggVision] cycle capture=${captureMs}ms inference=${response.inference_ms}ms total=${cycleMs}ms detections=${response.detections.length}`,
+          `[EggVision] cycle capture=${captureMs}ms preprocess=${preprocessMs}ms network=${Math.max(0, uploadNetworkMs).toFixed(0)}ms inference=${response.inference_ms}ms total=${cycleMs}ms primary_egg=${response.primary_egg?.confidence?.toFixed(2) ?? 'none'}`,
         );
       }
 

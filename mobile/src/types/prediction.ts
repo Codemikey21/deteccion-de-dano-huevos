@@ -1,4 +1,4 @@
-/** Estados de clasificación devueltos por el backend. */
+/** Estados de clasificación devueltos por el backend (raw/debug). */
 export type DetectionStatus = 'approved' | 'rejected' | 'unknown';
 
 /** Ruta sugerida por el backend para el flujo operativo. */
@@ -10,7 +10,17 @@ export type DetectionReason =
   | 'egg_not_detected'
   | 'crack_without_confirmed_egg';
 
+/** Estado único para UX. */
+export type DisplayStatus = 'detecting' | 'approved' | 'rejected' | 'review';
+
 export interface BBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export interface NormalizedBBox {
   x1: number;
   y1: number;
   x2: number;
@@ -22,6 +32,13 @@ export interface Detection {
   class_name: string;
   confidence: number;
   bbox: BBox;
+  bbox_normalized?: NormalizedBBox;
+}
+
+export interface PrimaryEgg {
+  confidence: number;
+  bbox: BBox;
+  bbox_normalized: NormalizedBBox;
 }
 
 export interface ImageInfo {
@@ -41,9 +58,11 @@ export interface PredictionResponse {
   egg_detected: boolean;
   crack_detected: boolean;
   image: ImageInfo;
-  /** Candidatos directos de YOLO (MODEL_CONFIDENCE). Ausente en backends antiguos. */
+  /** Fuente única de verdad para el huevo visible. */
+  primary_egg?: PrimaryEgg | null;
+  /** Cracks espacialmente asociados al primary_egg. */
+  cracks?: Detection[];
   raw_detections?: Detection[];
-  /** Detecciones válidas tras umbrales por clase. */
   detections: Detection[];
   inference_ms: number;
   model: ModelInfo;

@@ -11,19 +11,25 @@ from backend.app.schemas.prediction import (
     ModelInfo,
     PredictionResponse,
 )
-from backend.app.services.classification import classify_detections
+from backend.app.services.bbox_utils import normalize_bbox, sanitize_bbox
+from backend.app.services.classification import classify_primary_egg
 from backend.app.services.detection_filter import is_valid_crack, is_valid_egg
+from backend.app.services.detection_types import DetectionLike
 from backend.app.services.inference import InvalidImageError, ModelNotLoadedError, get_inference_service
+from backend.app.services.primary_egg import build_primary_egg_selection
 
 router = APIRouter(tags=["predict"])
 
 
-def _to_detection(raw) -> Detection:
+def _to_detection(raw, image_width: int, image_height: int) -> Detection:
+    bbox = BoundingBox(x1=raw.x1, y1=raw.y1, x2=raw.x2, y2=raw.y2)
+    sanitized = sanitize_bbox(bbox, image_width, image_height) or bbox
     return Detection(
         class_id=raw.class_id,
         class_name=raw.class_name,
         confidence=raw.confidence,
-        bbox=BoundingBox(x1=raw.x1, y1=raw.y1, x2=raw.x2, y2=raw.y2),
+        bbox=sanitized,
+        bbox_normalized=normalize_bbox(sanitized, image_width, image_height),
     )
 
 
@@ -69,16 +75,27 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
             detail=str(exc),
         ) from exc
 
-    raw_detection_likes = [d.to_detection_like() for d in output.detections]
-    classification = classify_detections(
-        raw_detection_likes,
-        egg_confidence_threshold=settings.egg_confidence,
+    image_width = output.width
+    image_height = output.height
+
+    selection = build_primary_egg_selection(output.detections, image_width, image_height)
+    associated_crack_likes = [
+        DetectionLike(
+            class_id=crack.class_id,
+            class_name=crack.class_name,
+            confidence=crack.confidence,
+        )
+        for crack in selection.associated_cracks
+    ]
+    classification = classify_primary_egg(
+        has_primary_egg=selection.primary_egg is not None,
+        associated_cracks=associated_crack_likes,
         crack_confidence_threshold=settings.crack_confidence,
     )
 
-    raw_detections = [_to_detection(d) for d in output.detections]
+    raw_detections = [_to_detection(d, image_width, image_height) for d in output.detections]
     filtered_detections = [
-        _to_detection(raw)
+        _to_detection(raw, image_width, image_height)
         for raw in output.detections
         if is_valid_egg(raw.to_detection_like(), settings.egg_confidence)
         or is_valid_crack(raw.to_detection_like(), settings.crack_confidence)
@@ -90,7 +107,9 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
         reason=classification.reason,
         egg_detected=classification.egg_detected,
         crack_detected=classification.crack_detected,
-        image=ImageInfo(width=output.width, height=output.height),
+        image=ImageInfo(width=image_width, height=image_height),
+        primary_egg=selection.primary_egg,
+        cracks=selection.associated_cracks,
         raw_detections=raw_detections,
         detections=filtered_detections,
         inference_ms=round(output.inference_ms, 2),

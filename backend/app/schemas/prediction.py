@@ -10,11 +10,25 @@ class BoundingBox(BaseModel):
     y2: float
 
 
+class NormalizedBBox(BaseModel):
+    x1: float = Field(ge=0.0, le=1.0)
+    y1: float = Field(ge=0.0, le=1.0)
+    x2: float = Field(ge=0.0, le=1.0)
+    y2: float = Field(ge=0.0, le=1.0)
+
+
 class Detection(BaseModel):
     class_id: int
     class_name: str
     confidence: float = Field(ge=0.0, le=1.0)
     bbox: BoundingBox
+    bbox_normalized: NormalizedBBox | None = None
+
+
+class PrimaryEgg(BaseModel):
+    confidence: float = Field(ge=0.0, le=1.0)
+    bbox: BoundingBox
+    bbox_normalized: NormalizedBBox
 
 
 class ImageInfo(BaseModel):
@@ -34,6 +48,8 @@ class PredictionResponse(BaseModel):
     egg_detected: bool
     crack_detected: bool
     image: ImageInfo
+    primary_egg: PrimaryEgg | None = None
+    cracks: list[Detection] = Field(default_factory=list)
     raw_detections: list[Detection]
     detections: list[Detection]
     inference_ms: float = Field(ge=0.0)
