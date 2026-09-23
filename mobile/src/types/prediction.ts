@@ -41,6 +41,9 @@ export interface PredictionResponse {
   egg_detected: boolean;
   crack_detected: boolean;
   image: ImageInfo;
+  /** Candidatos directos de YOLO (MODEL_CONFIDENCE). Ausente en backends antiguos. */
+  raw_detections?: Detection[];
+  /** Detecciones válidas tras umbrales por clase. */
   detections: Detection[];
   inference_ms: number;
   model: ModelInfo;

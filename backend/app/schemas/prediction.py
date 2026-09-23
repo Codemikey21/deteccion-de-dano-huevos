@@ -34,6 +34,7 @@ class PredictionResponse(BaseModel):
     egg_detected: bool
     crack_detected: bool
     image: ImageInfo
+    raw_detections: list[Detection]
     detections: list[Detection]
     inference_ms: float = Field(ge=0.0)
     model: ModelInfo

@@ -10,7 +10,7 @@ from pathlib import Path
 from PIL import Image, UnidentifiedImageError
 
 from backend.app.core.constants import CLASS_NAMES, MODEL_IMGSZ
-from backend.app.services.classification import DetectionLike
+from backend.app.services.detection_types import DetectionLike
 
 
 class ModelNotLoadedError(RuntimeError):

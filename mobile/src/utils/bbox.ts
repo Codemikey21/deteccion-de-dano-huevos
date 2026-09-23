@@ -12,6 +12,9 @@ export interface MappedBBox extends BBox {
   height: number;
 }
 
+const MIN_VISIBLE_BOX_PX = 4;
+const MIN_VISIBLE_AREA_RATIO = 0.1;
+
 /**
  * Convierte un bbox del espacio de coordenadas de la imagen inferida
  * al espacio visible de la preview de cámara.
@@ -56,6 +59,36 @@ export function mapBboxToPreview(
     width: x2 - x1,
     height: y2 - y1,
   };
+}
+
+/**
+ * Recorta un bbox mapeado a los límites del preview.
+ * Devuelve null si queda demasiado pequeño o casi fuera de pantalla.
+ */
+export function clampMappedBBox(
+  box: MappedBBox,
+  preview: PreviewSize,
+): MappedBBox | null {
+  const originalArea = Math.max(box.width * box.height, 1);
+
+  const x1 = Math.max(0, Math.min(box.x1, preview.width));
+  const y1 = Math.max(0, Math.min(box.y1, preview.height));
+  const x2 = Math.max(0, Math.min(box.x2, preview.width));
+  const y2 = Math.max(0, Math.min(box.y2, preview.height));
+
+  const width = x2 - x1;
+  const height = y2 - y1;
+
+  if (width < MIN_VISIBLE_BOX_PX || height < MIN_VISIBLE_BOX_PX) {
+    return null;
+  }
+
+  const visibleArea = width * height;
+  if (visibleArea / originalArea < MIN_VISIBLE_AREA_RATIO) {
+    return null;
+  }
+
+  return { x1, y1, x2, y2, width, height };
 }
 
 /** Mapea múltiples detecciones a coordenadas de preview. */

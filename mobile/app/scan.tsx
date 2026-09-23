@@ -14,6 +14,7 @@ import { DetectionOverlay } from '../src/components/DetectionOverlay';
 import { useAutoScan } from '../src/hooks/useAutoScan';
 import { useStabilizedClassification } from '../src/hooks/useStabilizedClassification';
 import type { PreviewSize } from '../src/utils/bbox';
+import { formatDetectionsSummary } from '../src/utils/formatDetections';
 
 function scanStatusLabel(options: {
   cameraReady: boolean;
@@ -141,7 +142,14 @@ export default function ScanScreen() {
 
         {prediction ? (
           <>
-            <Text style={styles.debugLine}>detections: {prediction.detections.length}</Text>
+            <Text style={styles.debugLine}>
+              raw detections ({prediction.raw_detections?.length ?? 0}):{' '}
+              {formatDetectionsSummary(prediction.raw_detections)}
+            </Text>
+            <Text style={styles.debugLine}>
+              filtered ({prediction.detections.length}):{' '}
+              {formatDetectionsSummary(prediction.detections)}
+            </Text>
             <Text style={styles.debugLine}>egg_detected: {String(prediction.egg_detected)}</Text>
             <Text style={styles.debugLine}>
               crack_detected: {String(prediction.crack_detected)}

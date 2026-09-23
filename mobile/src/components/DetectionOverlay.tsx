@@ -1,7 +1,13 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { Detection } from '../types/prediction';
-import { mapDetectionsToPreview, type PreviewSize } from '../utils/bbox';
+import {
+  clampMappedBBox,
+  mapDetectionsToPreview,
+  type PreviewSize,
+} from '../utils/bbox';
+import { filterVisualDetections } from '../utils/detectionFilter';
 
 interface DetectionOverlayProps {
   detections: Detection[];
@@ -20,29 +26,46 @@ export function DetectionOverlay({
   imageHeight,
   preview,
 }: DetectionOverlayProps) {
-  if (preview.width <= 0 || preview.height <= 0 || detections.length === 0) {
+  const visibleDetections = useMemo(() => {
+    if (preview.width <= 0 || preview.height <= 0) {
+      return [];
+    }
+
+    const filtered = filterVisualDetections(detections, imageWidth, imageHeight);
+    const mapped = mapDetectionsToPreview(
+      filtered,
+      imageWidth,
+      imageHeight,
+      preview,
+      'cover',
+    );
+
+    return mapped
+      .map((detection) => {
+        const clamped = clampMappedBBox(detection.preview_bbox, preview);
+        if (!clamped) {
+          return null;
+        }
+        return { ...detection, preview_bbox: clamped };
+      })
+      .filter(
+        (detection): detection is Detection & { preview_bbox: NonNullable<ReturnType<typeof clampMappedBBox>> } =>
+          detection !== null,
+      );
+  }, [detections, imageHeight, imageWidth, preview]);
+
+  if (visibleDetections.length === 0) {
     return null;
   }
 
-  const mapped = mapDetectionsToPreview(
-    detections,
-    imageWidth,
-    imageHeight,
-    preview,
-    'cover',
-  );
-
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {mapped.map((detection, index) => {
-        const { preview_bbox: box } = detection;
-        if (box.width <= 0 || box.height <= 0) {
-          return null;
-        }
+      {visibleDetections.map((detection) => {
+        const box = detection.preview_bbox;
 
         return (
           <View
-            key={`${detection.class_id}-${index}-${box.x1}-${box.y1}`}
+            key={`${detection.class_name}-${detection.confidence}-${box.x1}-${box.y1}`}
             style={[
               styles.box,
               {

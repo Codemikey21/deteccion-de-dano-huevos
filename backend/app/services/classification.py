@@ -3,8 +3,6 @@
 from dataclasses import dataclass
 
 from backend.app.core.constants import (
-    CLASS_ID_CRACK,
-    CLASS_ID_EGG,
     REASON_CRACK,
     REASON_CRACK_WITHOUT_EGG,
     REASON_NO_CRACK,
@@ -16,15 +14,10 @@ from backend.app.core.constants import (
     STATUS_REJECTED,
     STATUS_UNKNOWN,
 )
+from backend.app.services.detection_filter import is_valid_crack, is_valid_egg
+from backend.app.services.detection_types import DetectionLike
 
-
-@dataclass(frozen=True)
-class DetectionLike:
-    """Contrato mínimo para clasificación (sin depender de YOLO)."""
-
-    class_id: int
-    class_name: str
-    confidence: float
+__all__ = ["ClassificationResult", "DetectionLike", "classify_detections"]
 
 
 @dataclass(frozen=True)
@@ -38,28 +31,23 @@ class ClassificationResult:
 
 def classify_detections(
     detections: list[DetectionLike],
+    egg_confidence_threshold: float,
     crack_confidence_threshold: float,
 ) -> ClassificationResult:
     """Determina estado operativo a partir de detecciones del modelo.
 
     Reglas:
-    - ``rejected`` si hay ``egg`` y ``crack`` válido (confidence >= umbral).
-    - ``unknown`` / ``review`` si hay ``crack`` válido pero no hay ``egg``.
-    - ``approved`` si hay ``egg`` y no hay crack válido.
+    - ``rejected`` si hay ``egg`` válido y ``crack`` válido.
+    - ``unknown`` / ``review`` si hay ``crack`` válido pero no hay ``egg`` válido.
+    - ``approved`` si hay ``egg`` válido y no hay crack válido.
     - ``unknown`` si no hay ``egg`` ni crack válido.
 
     Nota: ``approved`` significa solo "huevo detectado sin grieta visible según este
     modelo". No implica calidad comercial, peso, suciedad ni otras clases ausentes
     en INDIGO.
     """
-    egg_detected = any(d.class_id == CLASS_ID_EGG or d.class_name == "egg" for d in detections)
-    valid_cracks = [
-        d
-        for d in detections
-        if (d.class_id == CLASS_ID_CRACK or d.class_name == "crack")
-        and d.confidence >= crack_confidence_threshold
-    ]
-    crack_detected = len(valid_cracks) > 0
+    egg_detected = any(is_valid_egg(d, egg_confidence_threshold) for d in detections)
+    crack_detected = any(is_valid_crack(d, crack_confidence_threshold) for d in detections)
 
     if crack_detected and not egg_detected:
         return ClassificationResult(

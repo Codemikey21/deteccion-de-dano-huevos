@@ -12,9 +12,19 @@ from backend.app.schemas.prediction import (
     PredictionResponse,
 )
 from backend.app.services.classification import classify_detections
+from backend.app.services.detection_filter import is_valid_crack, is_valid_egg
 from backend.app.services.inference import InvalidImageError, ModelNotLoadedError, get_inference_service
 
 router = APIRouter(tags=["predict"])
+
+
+def _to_detection(raw) -> Detection:
+    return Detection(
+        class_id=raw.class_id,
+        class_name=raw.class_name,
+        confidence=raw.confidence,
+        bbox=BoundingBox(x1=raw.x1, y1=raw.y1, x2=raw.x2, y2=raw.y2),
+    )
 
 
 @router.post("/predict", response_model=PredictionResponse)
@@ -59,19 +69,19 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
             detail=str(exc),
         ) from exc
 
+    raw_detection_likes = [d.to_detection_like() for d in output.detections]
     classification = classify_detections(
-        [d.to_detection_like() for d in output.detections],
+        raw_detection_likes,
+        egg_confidence_threshold=settings.egg_confidence,
         crack_confidence_threshold=settings.crack_confidence,
     )
 
-    detections = [
-        Detection(
-            class_id=d.class_id,
-            class_name=d.class_name,
-            confidence=d.confidence,
-            bbox=BoundingBox(x1=d.x1, y1=d.y1, x2=d.x2, y2=d.y2),
-        )
-        for d in output.detections
+    raw_detections = [_to_detection(d) for d in output.detections]
+    filtered_detections = [
+        _to_detection(raw)
+        for raw in output.detections
+        if is_valid_egg(raw.to_detection_like(), settings.egg_confidence)
+        or is_valid_crack(raw.to_detection_like(), settings.crack_confidence)
     ]
 
     return PredictionResponse(
@@ -81,7 +91,8 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
         egg_detected=classification.egg_detected,
         crack_detected=classification.crack_detected,
         image=ImageInfo(width=output.width, height=output.height),
-        detections=detections,
+        raw_detections=raw_detections,
+        detections=filtered_detections,
         inference_ms=round(output.inference_ms, 2),
         model=ModelInfo(name=MODEL_NAME, imgsz=MODEL_IMGSZ),
     )
