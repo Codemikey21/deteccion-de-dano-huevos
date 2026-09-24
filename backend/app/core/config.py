@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     crack_confidence: float = Field(default=0.55, ge=0.0, le=1.0)
     cors_origins: str = Field(default="*")
 
+    enable_egg_roi_inference: bool = Field(default=True)
+    roi_padding: float = Field(default=0.12, ge=0.0, le=1.0)
+    roi_crack_min_confidence: float = Field(default=0.25, ge=0.0, le=1.0)
+
     @field_validator("model_path", mode="before")
     @classmethod
     def resolve_model_path(cls, value: str | Path) -> Path:

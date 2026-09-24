@@ -45,6 +45,7 @@ class InferenceOutput:
     width: int
     height: int
     inference_ms: float
+    image: Image.Image
 
 
 class InferenceService:
@@ -106,6 +107,28 @@ class InferenceService:
         if width <= 0 or height <= 0:
             raise InvalidImageError("Dimensiones de imagen inválidas")
 
+        return self._run_model(image, confidence, imgsz)
+
+    def predict_image(
+        self,
+        image: Image.Image,
+        confidence: float,
+        imgsz: int = MODEL_IMGSZ,
+    ) -> InferenceOutput:
+        """Ejecuta el modelo sobre una imagen ya decodificada (p.ej. un recorte ROI)."""
+        if not self.is_loaded:
+            msg = self._load_error or "Modelo no cargado"
+            raise ModelNotLoadedError(msg)
+
+        width, height = image.size
+        if width <= 0 or height <= 0:
+            raise InvalidImageError("Dimensiones de imagen inválidas")
+
+        return self._run_model(image, confidence, imgsz)
+
+    def _run_model(self, image: Image.Image, confidence: float, imgsz: int) -> InferenceOutput:
+        width, height = image.size
+
         start = time.perf_counter()
         results = self._model.predict(
             source=image,
@@ -142,6 +165,7 @@ class InferenceService:
             width=width,
             height=height,
             inference_ms=elapsed_ms,
+            image=image,
         )
 
 

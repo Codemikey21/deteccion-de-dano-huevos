@@ -23,6 +23,8 @@ class Detection(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     bbox: BoundingBox
     bbox_normalized: NormalizedBBox | None = None
+    # Origen del crack tras combinar full-frame + ROI: "full_frame" | "egg_roi" | "both".
+    crack_source: str | None = None
 
 
 class PrimaryEgg(BaseModel):
@@ -54,6 +56,16 @@ class PredictionResponse(BaseModel):
     detections: list[Detection]
     inference_ms: float = Field(ge=0.0)
     model: ModelInfo
+
+    # Diagnóstico de la segunda etapa (ROI) — no consumido por la UI final.
+    roi_used: bool = False
+    roi_bbox: BoundingBox | None = None
+    roi_cracks: list[Detection] = Field(default_factory=list)
+    best_roi_crack_confidence: float | None = None
+    crack_source: str | None = None
+    full_frame_inference_ms: float | None = None
+    roi_inference_ms: float | None = None
+    total_inference_ms: float | None = None
 
 
 class HealthResponse(BaseModel):

@@ -88,6 +88,17 @@ def bbox_overlap_area(a: BoundingBox, b: BoundingBox) -> float:
     return (x2 - x1) * (y2 - y1)
 
 
+def bbox_iou(a: BoundingBox, b: BoundingBox) -> float:
+    overlap = bbox_overlap_area(a, b)
+    if overlap <= 0.0:
+        return 0.0
+
+    area_a = max((a.x2 - a.x1) * (a.y2 - a.y1), 0.0)
+    area_b = max((b.x2 - b.x1) * (b.y2 - b.y1), 0.0)
+    union = area_a + area_b - overlap
+    return overlap / union if union > 0 else 0.0
+
+
 def is_crack_near_egg(crack_bbox: BoundingBox, egg_bbox: BoundingBox, expansion: float = 1.15) -> bool:
     expanded = expand_bbox(egg_bbox, expansion)
     center_x = (crack_bbox.x1 + crack_bbox.x2) / 2.0
