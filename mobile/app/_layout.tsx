@@ -3,25 +3,56 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 
+import { TabIcon } from '../src/components/TabIcon';
+import { colors } from '../src/constants/theme';
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <Tabs
           screenOptions={{
-            headerTitleStyle: { fontWeight: '600' },
-            tabBarLabelStyle: { fontSize: 12 },
+            headerShown: false,
+            tabBarStyle: {
+              backgroundColor: colors.surface,
+              borderTopColor: colors.border,
+            },
+            tabBarActiveTintColor: colors.graphite,
+            tabBarInactiveTintColor: colors.textSecondary,
+            tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
           }}
         >
-          <Tabs.Screen name="index" options={{ title: 'Home', tabBarLabel: 'Home' }} />
-          <Tabs.Screen name="scan" options={{ title: 'Scan', tabBarLabel: 'Scan' }} />
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: 'EggVision',
+              tabBarLabel: 'Home',
+              tabBarIcon: ({ color }) => <TabIcon name="home" color={color} />,
+            }}
+          />
+          <Tabs.Screen
+            name="scan"
+            options={{
+              title: 'Scan',
+              tabBarLabel: 'Scan',
+              tabBarIcon: ({ color }) => <TabIcon name="scan" color={color} />,
+            }}
+          />
           <Tabs.Screen
             name="history"
-            options={{ title: 'History', tabBarLabel: 'History' }}
+            options={{
+              title: 'Historial',
+              tabBarLabel: 'History',
+              tabBarIcon: ({ color }) => <TabIcon name="history" color={color} />,
+            }}
           />
           <Tabs.Screen
             name="analytics"
-            options={{ title: 'Analytics', tabBarLabel: 'Analytics' }}
+            options={{
+              title: 'Analítica',
+              tabBarLabel: 'Analytics',
+              tabBarIcon: ({ color }) => <TabIcon name="analytics" color={color} />,
+            }}
           />
         </Tabs>
       </SafeAreaProvider>
@@ -32,5 +63,6 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    backgroundColor: colors.background,
   },
 });

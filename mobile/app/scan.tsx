@@ -1,44 +1,31 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   LayoutChangeEvent,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DetectionOverlay } from '../src/components/DetectionOverlay';
+import { InspectionZone } from '../src/components/InspectionZone';
+import { StatusCard } from '../src/components/StatusCard';
+import { SHOW_DEBUG } from '../src/constants/debug';
+import { colors, radius, spacing } from '../src/constants/theme';
 import { useAutoScan } from '../src/hooks/useAutoScan';
 import { useEggVision } from '../src/hooks/useEggVision';
+import { useEggSessionId, useInspectionRecorder } from '../src/hooks/useInspectionRecorder';
 import type { PreviewSize } from '../src/utils/bboxTransform';
 import { formatDetectionsSummary } from '../src/utils/formatDetections';
 import { resolvePrimaryEgg } from '../src/utils/resolvePrimaryEgg';
 
-function scanStatusLabel(options: {
-  cameraReady: boolean;
-  autoScanEnabled: boolean;
-  isProcessing: boolean;
-  hasPrediction: boolean;
-}): string {
-  if (!options.cameraReady) {
-    return 'Initializing camera…';
-  }
-  if (!options.autoScanEnabled) {
-    return 'Ready';
-  }
-  if (options.isProcessing && !options.hasPrediction) {
-    return 'Processing…';
-  }
-  if (!options.hasPrediction) {
-    return 'Waiting';
-  }
-  return 'Active';
-}
-
 export default function ScanScreen() {
+  const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraReady, setCameraReady] = useState(false);
@@ -60,7 +47,6 @@ export default function ScanScreen() {
 
   const {
     trackedEgg,
-    currentFrame,
     temporal,
     temporalCracksLabel,
     displayStatus,
@@ -70,15 +56,48 @@ export default function ScanScreen() {
     associatedCracks,
   } = useEggVision(prediction, previewSize, autoScanEnabled);
 
+  const sessionId = useEggSessionId(trackedEgg !== null);
+  const { recordIfNeeded } = useInspectionRecorder(sessionId);
+
+  useEffect(() => {
+    if (displayStatus !== 'approved' && displayStatus !== 'rejected') {
+      return;
+    }
+
+    recordIfNeeded({
+      status: displayStatus,
+      crackDetected: (crackEvidence?.level ?? 'none') !== 'none',
+      eggConfidence: trackedEgg?.egg.confidence,
+      crackConfidence: crackEvidence?.strongestConfidence ?? undefined,
+      inferenceMs: lastInferenceMs ?? prediction?.inference_ms,
+    });
+  }, [displayStatus, recordIfNeeded, crackEvidence, trackedEgg, lastInferenceMs, prediction]);
+
   const handlePreviewLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
     setPreviewSize({ width, height });
   }, []);
 
+  const resolvedPrimaryEgg = prediction ? resolvePrimaryEgg(prediction) : null;
+
+  const hasResult = displayStatus === 'approved' || displayStatus === 'rejected';
+  const crackDetected = (crackEvidence?.level ?? 'none') !== 'none';
+  const inferenceMsToShow = lastInferenceMs ?? prediction?.inference_ms ?? null;
+
+  const connectionNotice = useMemo(() => {
+    if (cameraError) {
+      return 'No se pudo iniciar la cámara.';
+    }
+    if (error) {
+      return 'Problema de conexión con el servidor. Reintentando…';
+    }
+    return null;
+  }, [cameraError, error]);
+
   if (!permission) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={colors.graphite} />
         <Text style={styles.message}>Verificando permisos de cámara…</Text>
       </View>
     );
@@ -87,29 +106,33 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.title}>Permiso de cámara requerido</Text>
+        <Text style={styles.permissionTitle}>Permiso de cámara requerido</Text>
         <Text style={styles.message}>
           La detección en vivo necesita acceso a la cámara trasera del dispositivo.
         </Text>
-        <Pressable style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Conceder permiso</Text>
+        <Pressable style={styles.permissionButton} onPress={requestPermission}>
+          <Text style={styles.permissionButtonText}>Conceder permiso</Text>
         </Pressable>
       </View>
     );
   }
 
-  const resolvedPrimaryEgg = prediction ? resolvePrimaryEgg(prediction) : null;
-
-  const statusLabel = scanStatusLabel({
-    cameraReady,
-    autoScanEnabled,
-    isProcessing,
-    hasPrediction: prediction !== null,
-  });
-
   return (
-    <View style={styles.container}>
-      <View style={styles.preview} onLayout={handlePreviewLayout}>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>EggVision</Text>
+        <View style={styles.systemIndicator}>
+          <View
+            style={[
+              styles.systemDot,
+              { backgroundColor: cameraReady ? colors.olive : colors.textSecondary },
+            ]}
+          />
+          <Text style={styles.systemText}>Sistema activo</Text>
+        </View>
+      </View>
+
+      <View style={styles.cameraCard} onLayout={handlePreviewLayout}>
         <CameraView
           ref={cameraRef}
           style={StyleSheet.absoluteFill}
@@ -124,186 +147,271 @@ export default function ScanScreen() {
           }}
         />
 
-        <DetectionOverlay visualBoxes={visualBoxes} preview={previewSize} />
+        <InspectionZone status={displayStatus} />
+
+        {SHOW_DEBUG ? (
+          <DetectionOverlay visualBoxes={visualBoxes} preview={previewSize} />
+        ) : null}
       </View>
 
-      <View style={styles.debugPanel}>
+      <ScrollView
+        style={styles.sheet}
+        contentContainerStyle={[styles.sheetContent, { paddingBottom: insets.bottom + spacing.lg }]}
+      >
+        <StatusCard status={displayStatus} />
+
+        {hasResult ? (
+          <View style={styles.secondaryInfo}>
+            <Text style={styles.secondaryLine}>Huevo detectado</Text>
+            <Text style={styles.secondaryLine}>
+              Grieta: {crackDetected ? 'detectada' : 'no detectada'}
+            </Text>
+            {inferenceMsToShow !== null ? (
+              <Text style={styles.secondaryLine}>Tiempo de análisis: {inferenceMsToShow} ms</Text>
+            ) : null}
+          </View>
+        ) : null}
+
         <View style={styles.switchRow}>
-          <Text style={styles.debugTitle}>Auto Scan</Text>
+          <View>
+            <Text style={styles.switchTitle}>Auto Scan</Text>
+            <Text style={styles.switchHint}>
+              {autoScanEnabled ? 'Analizando automáticamente' : 'Detenido'}
+            </Text>
+          </View>
           <Switch
             value={autoScanEnabled}
             onValueChange={setAutoScanEnabled}
             disabled={!cameraReady}
+            trackColor={{ false: colors.border, true: colors.oliveSoft }}
+            thumbColor={autoScanEnabled ? colors.olive : colors.surface}
           />
-          <Text style={styles.switchLabel}>{autoScanEnabled ? 'ON' : 'OFF'}</Text>
         </View>
 
-        <Text style={styles.debugLine}>Status: {statusLabel}</Text>
-        <Text style={styles.debugLine}>displayStatus: {displayStatus}</Text>
-        <Text style={styles.debugLine}>
-          cameraReady: {String(cameraReady)} · isProcessing: {String(isProcessing)}
-        </Text>
+        {connectionNotice ? <Text style={styles.notice}>{connectionNotice}</Text> : null}
 
-        {prediction ? (
-          <>
+        {SHOW_DEBUG ? (
+          <View style={styles.debugPanel}>
+            <Text style={styles.debugTitle}>Panel técnico</Text>
+            <Text style={styles.debugLine}>displayStatus: {displayStatus}</Text>
             <Text style={styles.debugLine}>
-              primary egg: {resolvedPrimaryEgg?.confidence.toFixed(2) ?? 'none'}
-              {prediction.primary_egg ? '' : resolvedPrimaryEgg ? ' (legacy fallback)' : ''}
+              cameraReady: {String(cameraReady)} · isProcessing: {String(isProcessing)}
             </Text>
-            <Text style={styles.debugLine}>
-              egg tracker: {trackedEgg?.phase ?? 'none'} · missed: {trackedEgg?.missedFrames ?? 0}
-              {trackedEgg?.outlierRejected ? ' · outlier' : ''}
-              {trackedEgg?.modelLocalizationError ? ' · MODEL_LOCALIZATION_ERROR' : ''}
-            </Text>
-            <Text style={styles.debugLine}>
-              raw detections ({prediction.raw_detections?.length ?? 0}):{' '}
-              {formatDetectionsSummary(prediction.raw_detections)}
-            </Text>
-            <Text style={styles.debugLine}>
-              associated cracks ({associatedCracks.length}):{' '}
-              {formatDetectionsSummary(associatedCracks)}
-            </Text>
-            <Text style={styles.debugLine}>
-              current crack evidence:{' '}
-              {crackEvidence?.level === 'none' || !crackEvidence
-                ? 'none'
-                : `${crackEvidence.level} ${crackEvidence.strongestConfidence?.toFixed(2)}`}
-            </Text>
-            <Text style={styles.debugLine} numberOfLines={2}>
-              temporal window: {temporalCracksLabel || 'empty'}
-            </Text>
-            <Text style={styles.debugLine}>
-              weak: {temporal?.weakVotes ?? 0} · strong: {temporal?.strongVotes ?? 0} · very
-              strong: {temporal?.veryStrongVotes ?? 0}
-            </Text>
-            <Text style={styles.debugLine}>raw status: {prediction.status}</Text>
-            <Text style={styles.debugLine}>temporal reason: {temporal?.reason ?? 'pending'}</Text>
 
-            {bboxDebug ? (
+            {prediction ? (
               <>
                 <Text style={styles.debugLine}>
-                  source: {bboxDebug.sourceWidth}x{bboxDebug.sourceHeight} · preview:{' '}
-                  {bboxDebug.previewWidth}x{bboxDebug.previewHeight}
+                  primary egg: {resolvedPrimaryEgg?.confidence.toFixed(2) ?? 'none'}
                 </Text>
                 <Text style={styles.debugLine}>
-                  orientation: {bboxDebug.orientationFix} · area ratio:{' '}
-                  {bboxDebug.areaRatio.toFixed(3)}
+                  egg tracker: {trackedEgg?.phase ?? 'none'} · missed:{' '}
+                  {trackedEgg?.missedFrames ?? 0}
+                  {trackedEgg?.outlierRejected ? ' · outlier' : ''}
+                  {trackedEgg?.modelLocalizationError ? ' · MODEL_LOCALIZATION_ERROR' : ''}
+                </Text>
+                <Text style={styles.debugLine}>
+                  raw detections ({prediction.raw_detections?.length ?? 0}):{' '}
+                  {formatDetectionsSummary(prediction.raw_detections)}
+                </Text>
+                <Text style={styles.debugLine}>
+                  associated cracks ({associatedCracks.length}):{' '}
+                  {formatDetectionsSummary(associatedCracks)}
                 </Text>
                 <Text style={styles.debugLine} numberOfLines={2}>
-                  raw bbox px: ({bboxDebug.sourcePixels.x1.toFixed(0)},{' '}
-                  {bboxDebug.sourcePixels.y1.toFixed(0)}) → (
-                  {bboxDebug.sourcePixels.x2.toFixed(0)},{' '}
-                  {bboxDebug.sourcePixels.y2.toFixed(0)})
+                  temporal window: {temporalCracksLabel || 'empty'}
                 </Text>
-                <Text style={styles.debugLine} numberOfLines={2}>
-                  mapped bbox: ({bboxDebug.mappedPixels.x1.toFixed(0)},{' '}
-                  {bboxDebug.mappedPixels.y1.toFixed(0)}) w=
-                  {bboxDebug.mappedPixels.width.toFixed(0)} h=
-                  {bboxDebug.mappedPixels.height.toFixed(0)}
+                <Text style={styles.debugLine}>
+                  weak: {temporal?.weakVotes ?? 0} · strong: {temporal?.strongVotes ?? 0} · very
+                  strong: {temporal?.veryStrongVotes ?? 0}
+                </Text>
+                <Text style={styles.debugLine}>raw status: {prediction.status}</Text>
+                <Text style={styles.debugLine}>
+                  temporal reason: {temporal?.reason ?? 'pending'}
+                </Text>
+
+                {bboxDebug ? (
+                  <>
+                    <Text style={styles.debugLine}>
+                      source: {bboxDebug.sourceWidth}x{bboxDebug.sourceHeight} · preview:{' '}
+                      {bboxDebug.previewWidth}x{bboxDebug.previewHeight}
+                    </Text>
+                    <Text style={styles.debugLine}>
+                      orientation: {bboxDebug.orientationFix} · area ratio:{' '}
+                      {bboxDebug.areaRatio.toFixed(3)}
+                    </Text>
+                  </>
+                ) : null}
+
+                <Text style={styles.debugLine}>
+                  inference_ms: {lastInferenceMs ?? prediction.inference_ms}
                 </Text>
               </>
+            ) : (
+              <Text style={styles.debugLine}>
+                {autoScanEnabled ? 'Esperando primera inferencia…' : 'Activa Auto Scan para inferir'}
+              </Text>
+            )}
+
+            {metrics ? (
+              <Text style={styles.debugMeta}>
+                capture {metrics.captureMs}ms · preprocess {metrics.preprocessMs}ms · network{' '}
+                {metrics.uploadNetworkMs.toFixed(0)}ms · inference {metrics.serverInferenceMs}ms ·
+                cycle {metrics.cycleMs}ms
+                {metrics.resized ? ' · resized' : ''}
+              </Text>
             ) : null}
 
-            <Text style={styles.debugLine}>
-              inference_ms: {lastInferenceMs ?? prediction.inference_ms}
-            </Text>
-          </>
-        ) : (
-          <Text style={styles.debugLine}>
-            {autoScanEnabled ? 'Esperando primera inferencia…' : 'Activa Auto Scan para inferir'}
-          </Text>
-        )}
-
-        {metrics ? (
-          <Text style={styles.debugMeta}>
-            capture {metrics.captureMs}ms · preprocess {metrics.preprocessMs}ms · network{' '}
-            {metrics.uploadNetworkMs.toFixed(0)}ms · inference {metrics.serverInferenceMs}ms ·
-            cycle {metrics.cycleMs}ms
-            {metrics.resized ? ' · resized' : ''}
-          </Text>
+            {cameraError ? <Text style={styles.errorText}>Camera: {cameraError}</Text> : null}
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          </View>
         ) : null}
-
-        {cameraError ? <Text style={styles.errorText}>Camera: {cameraError}</Text> : null}
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: colors.background,
   },
-  preview: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  systemIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  systemDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  systemText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  cameraCard: {
+    marginHorizontal: spacing.lg,
+    height: '42%',
+    borderRadius: radius.lg,
     overflow: 'hidden',
+    backgroundColor: colors.graphite,
   },
-  debugPanel: {
-    padding: 14,
+  sheet: {
+    flex: 1,
+  },
+  sheetContent: {
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  secondaryInfo: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
     gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+  },
+  secondaryLine: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   switchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 4,
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+  },
+  switchTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  switchHint: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  notice: {
+    fontSize: 12,
+    color: colors.terracottaStrong,
+    textAlign: 'center',
+  },
+  debugPanel: {
+    marginTop: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.graphite,
+    gap: 4,
   },
   debugTitle: {
-    color: '#fff',
-    fontSize: 14,
+    color: colors.textInverse,
+    fontSize: 13,
     fontWeight: '700',
-    flex: 1,
-  },
-  switchLabel: {
-    color: '#ccc',
-    fontSize: 12,
-    fontWeight: '600',
-    width: 28,
+    marginBottom: 4,
   },
   debugLine: {
     color: '#ddd',
-    fontSize: 12,
+    fontSize: 11,
   },
   debugMeta: {
     color: '#aaa',
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 2,
   },
   errorText: {
     color: '#ffb4b4',
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 4,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    gap: 12,
+    padding: spacing.lg,
+    gap: spacing.md,
+    backgroundColor: colors.background,
   },
-  title: {
+  permissionTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   message: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#444',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
-  button: {
+  permissionButton: {
     alignSelf: 'center',
-    backgroundColor: '#111',
+    backgroundColor: colors.graphite,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     marginTop: 8,
   },
-  buttonText: {
-    color: '#fff',
+  permissionButtonText: {
+    color: colors.textInverse,
     fontWeight: '600',
   },
 });
