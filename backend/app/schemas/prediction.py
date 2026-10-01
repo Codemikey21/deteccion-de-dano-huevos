@@ -1,5 +1,7 @@
 """Schemas Pydantic de request/response."""
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -43,7 +45,32 @@ class ModelInfo(BaseModel):
     imgsz: int
 
 
+class EggResult(PrimaryEgg):
+    # Frame-local number; not a persistent tracking identity.
+    id: int = Field(ge=1)
+    status: Literal["healthy", "damaged"]
+    damage_source: Literal["none", "dark_line", "yolo_crack", "both"]
+    dark_line_area_ratio: float = Field(ge=0.0, le=1.0)
+    cracks: list[Detection] = Field(default_factory=list)
+
+
+class EggSummary(BaseModel):
+    total: int = Field(ge=0)
+    healthy: int = Field(ge=0)
+    damaged: int = Field(ge=0)
+
+
+class PredictionTiming(BaseModel):
+    full_frame_ms: float = Field(ge=0.0)
+    roi_analysis_ms: float = Field(ge=0.0)
+    total_ms: float = Field(ge=0.0)
+
+
 class PredictionResponse(BaseModel):
+    # None means legacy mode; [] means multi-egg mode found no eggs.
+    eggs: list[EggResult] | None = None
+    summary: EggSummary | None = None
+    timing: PredictionTiming | None = None
     status: str
     route: str
     reason: str

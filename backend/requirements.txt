@@ -7,3 +7,7 @@ pillow
 pydantic-settings
 pytest
 httpx
+
+# Used directly by the demo ROI analyzer (also dependencies of ultralytics).
+numpy
+opencv-python

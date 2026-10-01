@@ -22,6 +22,7 @@ import { useEggVision } from '../src/hooks/useEggVision';
 import { useEggSessionId, useInspectionRecorder } from '../src/hooks/useInspectionRecorder';
 import type { PreviewSize } from '../src/utils/bboxTransform';
 import { formatDetectionsSummary } from '../src/utils/formatDetections';
+import { damageLabel, getMultiEggResult } from '../src/utils/multiEgg';
 import { resolvePrimaryEgg } from '../src/utils/resolvePrimaryEgg';
 
 export default function ScanScreen() {
@@ -45,6 +46,8 @@ export default function ScanScreen() {
     cameraReady,
   });
 
+  const multiEgg = getMultiEggResult(prediction);
+
   const {
     trackedEgg,
     temporal,
@@ -54,12 +57,13 @@ export default function ScanScreen() {
     visualBoxes,
     bboxDebug,
     associatedCracks,
-  } = useEggVision(prediction, previewSize, autoScanEnabled);
+  } = useEggVision(multiEgg ? null : prediction, previewSize, autoScanEnabled);
 
   const sessionId = useEggSessionId(trackedEgg !== null);
   const { recordIfNeeded } = useInspectionRecorder(sessionId);
 
   useEffect(() => {
+    if (Array.isArray(prediction?.eggs)) return;
     if (displayStatus !== 'approved' && displayStatus !== 'rejected') {
       return;
     }
@@ -147,9 +151,9 @@ export default function ScanScreen() {
           }}
         />
 
-        <InspectionZone status={displayStatus} />
+        {!multiEgg ? <InspectionZone status={displayStatus} /> : null}
 
-        {SHOW_DEBUG ? (
+        {SHOW_DEBUG && !multiEgg ? (
           <DetectionOverlay visualBoxes={visualBoxes} preview={previewSize} />
         ) : null}
       </View>
@@ -158,9 +162,37 @@ export default function ScanScreen() {
         style={styles.sheet}
         contentContainerStyle={[styles.sheetContent, { paddingBottom: insets.bottom + spacing.lg }]}
       >
-        <StatusCard status={displayStatus} />
+        {multiEgg ? (
+          <View style={styles.secondaryInfo}>
+            <Text style={styles.switchTitle}>
+              {!autoScanEnabled ? 'Último resultado · pausado' : error || cameraError ? 'Último resultado · sin actualizar' : 'Resultado de la última captura'}
+            </Text>
+            <Text style={styles.switchTitle}>Huevos detectados: {multiEgg.summary.total}</Text>
+            <Text style={styles.secondaryLine}>
+              Sanos: {multiEgg.summary.healthy} · Dañados: {multiEgg.summary.damaged}
+            </Text>
+            {multiEgg.summary.total === 0 ? (
+              <Text style={styles.secondaryLine}>No se detectaron huevos. Acerca los objetos y mejora la iluminación.</Text>
+            ) : null}
+            {multiEgg.eggs.map((egg) => (
+              <View key={egg.id} style={styles.eggRow}>
+                <Text style={[styles.secondaryLine, { color: egg.status === 'damaged' ? colors.terracottaStrong : colors.olive }]}>
+                  Huevo {egg.id}: {egg.status === 'damaged' ? 'DAÑADO' : 'SANO'}
+                </Text>
+                <Text style={styles.secondaryLine}>{damageLabel(egg.damage_source)}</Text>
+              </View>
+            ))}
+            <Text style={styles.switchHint}>
+              Números por captura, de izquierda a derecha en la imagen analizada; pueden cambiar al mover la cámara.
+            </Text>
+            <Text style={styles.secondaryLine}>
+              Análisis: {prediction?.timing?.total_ms ?? inferenceMsToShow} ms
+              {metrics ? ` · ciclo completo: ${metrics.cycleMs} ms` : ''}
+            </Text>
+          </View>
+        ) : <StatusCard status={displayStatus} />}
 
-        {hasResult ? (
+        {!multiEgg && hasResult ? (
           <View style={styles.secondaryInfo}>
             <Text style={styles.secondaryLine}>Huevo detectado</Text>
             <Text style={styles.secondaryLine}>
@@ -323,6 +355,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
+    gap: 4,
+  },
+  eggRow: {
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
     gap: 4,
   },
   secondaryLine: {

@@ -2,7 +2,10 @@
  * Intervalo inicial entre capturas automáticas (ms).
  * Valor de partida; no implica frecuencia final de producción.
  */
-export const SCAN_INTERVAL_MS = 1000;
+const configuredScanInterval = Number(process.env.EXPO_PUBLIC_SCAN_INTERVAL_MS ?? 150);
+export const SCAN_INTERVAL_MS = Number.isFinite(configuredScanInterval)
+  ? Math.max(100, configuredScanInterval)
+  : 150;
 
 /** Timeout por defecto para requests al backend (ms). */
 export const API_REQUEST_TIMEOUT_MS = 10_000;

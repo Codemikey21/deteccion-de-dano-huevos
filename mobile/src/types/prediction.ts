@@ -51,7 +51,25 @@ export interface ModelInfo {
   imgsz: number;
 }
 
+export interface EggResult extends PrimaryEgg {
+  /** Number within the current frame, not a persistent tracking ID. */
+  id: number;
+  status: 'healthy' | 'damaged';
+  damage_source: 'none' | 'dark_line' | 'yolo_crack' | 'both';
+  dark_line_area_ratio: number;
+  cracks: Detection[];
+}
+
+export interface EggSummary {
+  total: number;
+  healthy: number;
+  damaged: number;
+}
+
 export interface PredictionResponse {
+  eggs?: EggResult[] | null;
+  summary?: EggSummary | null;
+  timing?: { full_frame_ms: number; roi_analysis_ms: number; total_ms: number } | null;
   status: DetectionStatus;
   route: DetectionRoute;
   reason: DetectionReason;

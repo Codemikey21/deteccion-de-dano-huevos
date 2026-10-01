@@ -1,5 +1,7 @@
 """Endpoint de predicción por imagen."""
 
+import time
+
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from backend.app.core.config import get_settings
@@ -10,6 +12,8 @@ from backend.app.schemas.prediction import (
     ImageInfo,
     ModelInfo,
     PredictionResponse,
+    PredictionTiming,
+    PrimaryEgg,
 )
 from backend.app.services.bbox_utils import normalize_bbox, sanitize_bbox
 from backend.app.services.classification import classify_primary_egg
@@ -18,6 +22,8 @@ from backend.app.services.detection_types import DetectionLike
 from backend.app.services.egg_roi import run_egg_roi_crack_pass
 from backend.app.services.inference import InvalidImageError, ModelNotLoadedError, get_inference_service
 from backend.app.services.primary_egg import build_primary_egg_selection
+
+from backend.app.services.multi_egg import analyze_eggs
 
 router = APIRouter(tags=["predict"])
 
@@ -59,6 +65,7 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
             detail="Archivo vacío",
         )
 
+    analysis_start = time.perf_counter()
     try:
         output = inference.predict(
             image_bytes=image_bytes,
@@ -78,6 +85,35 @@ async def predict(file: UploadFile = File(...)) -> PredictionResponse:
 
     image_width = output.width
     image_height = output.height
+
+    if settings.enable_multi_egg:
+        roi_start = time.perf_counter()
+        eggs, summary = analyze_eggs(output.image, output.detections, settings)
+        roi_ms = (time.perf_counter() - roi_start) * 1000
+        # Legacy fields still describe one primary egg, not the entire batch.
+        primary = max(eggs, key=lambda egg: egg.confidence, default=None)
+        damaged = primary is not None and primary.status == "damaged"
+        total_ms = (time.perf_counter() - analysis_start) * 1000
+        raw = [_to_detection(d, image_width, image_height) for d in output.detections]
+        return PredictionResponse(
+            eggs=eggs, summary=summary,
+            timing=PredictionTiming(full_frame_ms=round(output.inference_ms, 2),
+                                    roi_analysis_ms=round(roi_ms, 2), total_ms=round(total_ms, 2)),
+            status="unknown" if primary is None else "rejected" if damaged else "approved",
+            route="review" if primary is None else "reject" if damaged else "accept",
+            reason="egg_not_detected" if primary is None else "crack_detected" if damaged else "no_crack_detected",
+            egg_detected=primary is not None, crack_detected=damaged,
+            image=ImageInfo(width=image_width, height=image_height),
+            primary_egg=PrimaryEgg(confidence=primary.confidence, bbox=primary.bbox,
+                                   bbox_normalized=primary.bbox_normalized) if primary else None,
+            cracks=primary.cracks if primary else [], raw_detections=raw,
+            detections=[d for d in raw if is_valid_egg(d, settings.egg_confidence)
+                        or is_valid_crack(d, settings.crack_confidence)],
+            inference_ms=round(output.inference_ms, 2),
+            model=ModelInfo(name=MODEL_NAME, imgsz=MODEL_IMGSZ),
+            full_frame_inference_ms=round(output.inference_ms, 2),
+            total_inference_ms=round(output.inference_ms, 2),
+        )
 
     selection = build_primary_egg_selection(output.detections, image_width, image_height)
 

@@ -2,6 +2,10 @@
 
 Backend de inferencia para detección de huevos y grietas con **YOLOv8n @ imgsz=960**.
 
+## Demo multi-huevo
+
+El modo multi-huevo está activo por defecto. Consulta la [guía de demo](../docs/multi-egg-demo.md) para configuración, contrato, límites y regreso al flujo anterior.
+
 ## Propósito
 
 - Recibir una imagen (JPEG/PNG)

@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     crack_confidence: float = Field(default=0.55, ge=0.0, le=1.0)
     cors_origins: str = Field(default="*")
 
+    # Demo: a single full-frame YOLO pass plus inexpensive per-egg analysis.
+    enable_multi_egg: bool = True
+    damage_dark_threshold: int = Field(default=100, ge=0, le=255)
+    damage_min_contrast: int = Field(default=35, ge=1, le=255)
+    damage_min_area_ratio: float = Field(default=0.003, gt=0.0, le=1.0)
+    damage_min_length_ratio: float = Field(default=0.18, gt=0.0, le=1.0)
+    damage_min_elongation: float = Field(default=2.5, ge=1.0)
+    damage_inner_scale: float = Field(default=0.80, gt=0.0, le=1.0)
+    damage_roi_max_side: int = Field(default=256, ge=32, le=1024)
+
     enable_egg_roi_inference: bool = Field(default=True)
     roi_padding: float = Field(default=0.12, ge=0.0, le=1.0)
     roi_crack_min_confidence: float = Field(default=0.25, ge=0.0, le=1.0)
