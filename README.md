@@ -384,7 +384,7 @@ _Pendiente de agregar capturas de pantalla de la aplicación final._
 
 **Miguel Ángel Solano Díaz**<br>
 **Andi Lin**<br>
-**Santiago Cabezas**
+**Santiago Cabezas**<br>
 Ingeniería de Sistemas
 Universidad Autónoma de Bucaramanga — UNAB
 
