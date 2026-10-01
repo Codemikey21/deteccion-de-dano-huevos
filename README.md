@@ -380,9 +380,11 @@ _Pendiente de agregar capturas de pantalla de la aplicación final._
 | History | `assets/readme/history.png` |
 | Analytics | `assets/readme/analytics.png` |
 
-## Autor
+## Autor <br>
 
-**Miguel Ángel Solano Díaz**
+**Miguel Ángel Solano Díaz**<br>
+**Andi Lin**<br>
+**Santiago Cabezas**
 Ingeniería de Sistemas
 Universidad Autónoma de Bucaramanga — UNAB
 
