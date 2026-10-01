@@ -26,6 +26,16 @@ class Settings(BaseSettings):
 
     # Demo: a single full-frame YOLO pass plus inexpensive per-egg analysis.
     enable_multi_egg: bool = True
+    # Brown/ochre demo objects on a neutral background. Disable for general use.
+    enable_demo_localization: bool = True
+    demo_min_saturation: int = Field(default=65, ge=0, le=255)
+    demo_min_value: int = Field(default=65, ge=0, le=255)
+    demo_min_area_ratio: float = Field(default=0.003, gt=0.0, le=0.1)
+    demo_max_area_ratio: float = Field(default=0.45, gt=0.1, le=1.0)
+    demo_max_side: int = Field(default=640, ge=128, le=1280)
+    demo_max_objects: int = Field(default=32, ge=1, le=64)
+    damage_local_window_ratio: float = Field(default=0.25, gt=0.0, le=0.75)
+    damage_mark_area_ratio: float = Field(default=0.015, gt=0.0, le=1.0)
     damage_dark_threshold: int = Field(default=100, ge=0, le=255)
     damage_min_contrast: int = Field(default=35, ge=1, le=255)
     damage_min_area_ratio: float = Field(default=0.003, gt=0.0, le=1.0)

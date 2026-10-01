@@ -25,8 +25,9 @@ Reinicia el backend después de cambiar umbrales. No sobrescribas un .env existe
 3. Coloca un huevo claro sano; después uno con una raya oscura alargada en el centro.
 4. Coloca cinco objetos separados y bien iluminados, primero todos sanos y después
    mezclados. Verifica cada estado y que sanos + dañados = total.
-5. Confirma que cada objeto aparece como `egg`. Si una pelota no aparece, el
-   clasificador de rayas no la puede recuperar: necesita una caja del detector.
+5. Confirma el conteo con los objetos reales. El complemento de forma recupera
+   huevos marrones sobre fondos neutros; las pelotas blancas siguen dependiendo
+   de YOLO. Usa un fondo liso y evita objetos marrones que no sean huevos.
 6. Revisa “ciclo completo” en Scan: incluye captura, preparación, red e inferencia;
    se suma además la pausa configurada entre ciclos.
 
@@ -44,7 +45,7 @@ la cámara mientras no esté verificada su correspondencia.
 | EGG_CONFIDENCE | 0.40 | Confianza mínima para contar un huevo |
 | CRACK_CONFIDENCE | 0.55 | Confianza mínima de grieta YOLO para marcar daño |
 | DAMAGE_DARK_THRESHOLD | 100 | Límite de gris oscuro, 0–255; subir admite marcas más claras |
-| DAMAGE_MIN_CONTRAST | 35 | Diferencia mínima respecto a la mediana del interior |
+| DAMAGE_MIN_CONTRAST | 35 | Contraste mínimo respecto a la iluminación local estimada |
 | DAMAGE_MIN_AREA_RATIO | 0.003 | Fracción mínima del interior ocupada por una marca conectada |
 | DAMAGE_MIN_LENGTH_RATIO | 0.18 | Largo mínimo relativo al lado menor del recorte |
 | DAMAGE_MIN_ELONGATION | 2.5 | Relación largo/ancho mínima de la marca |
@@ -66,7 +67,8 @@ petición en curso. No equivale a 150 ms de latencia total.
 
 - Una inferencia YOLO de la imagen completa a 960; ninguna segunda inferencia
   YOLO en modo multi, incluso con un único huevo.
-- `eggs[]`: `id`, `bbox`, `bbox_normalized`, `confidence` de YOLO, `status`
+- `eggs[]`: `id`, `bbox`, `bbox_normalized`, `confidence` de YOLO (0 cuando el
+  objeto solo viene de la heurística), `localization_source`, `status`
   (`healthy`/`damaged`), `damage_source`, `dark_line_area_ratio` y `cracks`.
   La fracción de marca no es una probabilidad ni confianza de una red.
 - `summary`: `total`, `healthy`, `damaged`, para toda la captura.
@@ -96,7 +98,52 @@ No se entrenó, sustituyó ni modificó `best.pt`. Falta validar los objetos rea
 de la demo y la cámara del teléfono. Fotos/vídeos cargados como funciones nuevas
 no forman parte de este cambio: se mantiene Auto Scan y el POST de imagen existente.
 
-## Comprobaciones realizadas
+## Corrección de omisiones y sombras
+
+Las escenas de la demo mostraron que YOLO omite incluso huevos grandes, y
+que el umbral oscuro global podía interpretar una sombra como daño. Ahora:
+
+- `demo_localization.py` complementa YOLO con segmentación de tonos marrones,
+  filtrado por forma, centros de distancia y separación de objetos en contacto.
+  Normaliza la escala y adapta el corte de brillo a la exposición.
+- Combina las cajas de ambos métodos sin duplicar el mismo huevo. Si una caja
+  YOLO agrupa varias formas, utiliza las formas separadas.
+- El análisis de marcas usa contraste local y rechaza componentes pegados al
+  borde interior, para reducir falsos positivos de sombras y uniones entre huevos.
+  También acepta marcas irregulares amplias, como el garabato de la demostración.
+- `localization_source` indica `yolo`, `demo_shape` o `yolo+demo_shape`.
+  `confidence=0` en `demo_shape` significa ausencia de puntuación YOLO;
+  no es una probabilidad inventada para la heurística.
+- Las roturas físicas claras siguen usando las detecciones de grieta del modelo.
+  El frontend dice “marca oscura visible” para la evidencia clásica, sin asegurar
+  que toda marca sea una simulación dibujada.
+
+Variables nuevas, con defaults activos tras reiniciar el backend:
+
+| Variable | Default | Efecto |
+| --- | --- | --- |
+| ENABLE_DEMO_LOCALIZATION | true | Complemento para huevos marrones; false lo desactiva |
+| DEMO_MIN_SATURATION | 65 | Saturación mínima del tono marrón |
+| DEMO_MIN_VALUE | 65 | Corte de brillo base, ajustado por exposición |
+| DEMO_MIN_AREA_RATIO | 0.003 | Área mínima relativa al frame |
+| DEMO_MAX_AREA_RATIO | 0.45 | Rechaza regiones marrones excesivamente grandes |
+| DEMO_MAX_SIDE | 640 | Resolución de trabajo normalizada del complemento |
+| DEMO_MAX_OBJECTS | 32 | Máximo de candidatos por forma |
+| DAMAGE_LOCAL_WINDOW_RATIO | 0.25 | Ventana de iluminación relativa al recorte |
+| DAMAGE_MARK_AREA_RATIO | 0.015 | Área mínima para una marca irregular no alargada |
+
+Este complemento es específico para la demo: puede confundir otros objetos
+marrones ovalados y no añade reconocimiento general de huevos blancos o pelotas.
+Mantiene una sola llamada a YOLO. No se cambia el checkpoint ni se entrena.
+
+Validación de la corrección: 116 tests backend, incluidos los nueve recortes
+reales, con escala 0.65 y brillo 0.8/1.2, fondos vacíos, ruido y deduplicación.
+Con el modelo real y confianza 0.25, los nueve recortes originales dan los
+conteos esperados (4,1,1,2,2,2,4,4,4), cada uno con un dañado visible.
+Esto verifica las capturas suministradas, no garantiza precisión general ni
+latencia de cámara/red. Se debe repetir la prueba física después del despliegue.
+
+## Comprobaciones de la primera versión
 
 - Backend: `python -m pytest backend/tests -q`: 64 passed; dos avisos de
   deprecación de dependencias TestClient.
@@ -118,5 +165,5 @@ no forman parte de este cambio: se mantiene Auto Scan y el POST de imagen existe
 
 Desde la raíz puedes ejecutar `git diff --stat`, `git diff` y `git status --short`.
 Los archivos nuevos aparecen con `??` y no salen en `git diff` hasta que se
-incluyan en el índice; se revisan abriéndolos. No se hizo commit, push ni staging.
+incluyan en el índice; se revisan abriéndolos. Revisa siempre los archivos incluidos antes de crear el commit.
 La carpeta `.claude/` ya estaba sin seguimiento antes de comenzar y no se modificó.

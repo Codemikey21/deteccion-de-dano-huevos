@@ -15,6 +15,7 @@ from backend.app.schemas.prediction import (
 from backend.app.services.bbox_utils import bbox_overlap_area, normalize_bbox, sanitize_bbox
 from backend.app.services.detection_filter import is_valid_crack, is_valid_egg
 from backend.app.services.inference import RawDetection
+from backend.app.services.demo_localization import EggCandidate, find_demo_eggs, merge_candidates
 
 
 @dataclass(frozen=True)
@@ -26,8 +27,9 @@ class DarkLineResult:
 def analyze_dark_line(roi: Image.Image, settings: Settings) -> DarkLineResult:
     """Look for connected, elongated dark marks inside an inset egg ellipse.
 
-    An absolute threshold AND contrast to the interior median reduce responses
-    to uniform brown shells/shadows. The ellipse excludes background/corners.
+    A morphological closing estimates illumination around each pixel. Dark
+    marks must contrast locally: a smooth shaded hemisphere is not a crack.
+    The inset ellipse excludes background/corners.
     This is evidence of a demo mark, never a physical crack diagnosis.
     """
     if min(roi.size) < 12:
@@ -44,22 +46,33 @@ def analyze_dark_line(roi: Image.Image, settings: Settings) -> DarkLineResult:
     interior_area = int(inside.sum())
     if not interior_area:
         return DarkLineResult(False, 0.0)
-    cutoff = min(settings.damage_dark_threshold,
-                 float(np.median(gray[inside])) - settings.damage_min_contrast)
-    mask = ((gray < cutoff) & inside).astype(np.uint8)
+    window = max(5, int(min(w, h) * settings.damage_local_window_ratio) | 1)
+    illumination = cv2.morphologyEx(
+        gray, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (window, window)),
+    )
+    contrast = illumination.astype(np.float32) - gray.astype(np.float32)
+    mask = ((gray < settings.damage_dark_threshold)
+            & (contrast >= settings.damage_min_contrast) & inside).astype(np.uint8)
     count, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    # A dark component hugging the mask boundary is likely a rim/contact shadow.
+    inner = inside.astype(np.uint8)
+    boundary = inner - cv2.erode(inner, np.ones((5, 5), np.uint8))
     best_area = 0.0
     for label in range(1, count):
         area_ratio = float(stats[label, cv2.CC_STAT_AREA]) / interior_area
         if area_ratio < settings.damage_min_area_ratio:
             continue
-        y, x = np.where(labels == label)
+        component = labels == label
+        if float(boundary[component].sum()) / stats[label, cv2.CC_STAT_AREA] > 0.25:
+            continue
+        y, x = np.where(component)
         # Rotated geometry keeps diagonal lines eligible and small spots out.
         points = np.column_stack((x, y)).astype(np.float32)
         _, (side_a, side_b), _ = cv2.minAreaRect(points)
         length, thickness = max(side_a, side_b) + 1, min(side_a, side_b) + 1
         if (length / min(w, h) >= settings.damage_min_length_ratio
-                and length / thickness >= settings.damage_min_elongation):
+                and (length / thickness >= settings.damage_min_elongation
+                     or area_ratio >= settings.damage_mark_area_ratio)):
             best_area = max(best_area, area_ratio)
     return DarkLineResult(best_area > 0, round(best_area, 6))
 
@@ -80,11 +93,12 @@ def analyze_eggs(image: Image.Image, detections: list[RawDetection], settings: S
             continue
         box = _box(raw, width, height)
         if box is not None:
-            candidates.append((raw, box))
+            candidates.append(EggCandidate(box, raw.confidence))
+    candidates = merge_candidates(candidates, find_demo_eggs(image, settings))
     # Stable under permutations of YOLO output. IDs are local to each frame.
-    candidates.sort(key=lambda pair: (
-        (pair[1].x1 + pair[1].x2) / 2, (pair[1].y1 + pair[1].y2) / 2,
-        pair[1].x1, pair[1].y1, pair[1].x2, pair[1].y2, -pair[0].confidence,
+    candidates.sort(key=lambda c: (
+        (c.bbox.x1 + c.bbox.x2) / 2, (c.bbox.y1 + c.bbox.y2) / 2,
+        c.bbox.x1, c.bbox.y1, c.bbox.x2, c.bbox.y2, -c.confidence,
     ))
     cracks: list[list[Detection]] = [[] for _ in candidates]
     for raw in detections:
@@ -95,9 +109,9 @@ def analyze_eggs(image: Image.Image, detections: list[RawDetection], settings: S
             continue
         # Assign each crack to at most one egg: center inside + greatest overlap.
         cx, cy = (box.x1 + box.x2) / 2, (box.y1 + box.y2) / 2
-        owners = [(bbox_overlap_area(box, egg), index)
-                  for index, (_, egg) in enumerate(candidates)
-                  if egg.x1 <= cx <= egg.x2 and egg.y1 <= cy <= egg.y2]
+        owners = [(bbox_overlap_area(box, c.bbox), index)
+                  for index, c in enumerate(candidates)
+                  if c.bbox.x1 <= cx <= c.bbox.x2 and c.bbox.y1 <= cy <= c.bbox.y2]
         if owners:
             _, index = max(owners, key=lambda item: (item[0], -item[1]))
             cracks[index].append(Detection(
@@ -106,14 +120,16 @@ def analyze_eggs(image: Image.Image, detections: list[RawDetection], settings: S
                 crack_source="full_frame",
             ))
     eggs = []
-    for index, (raw, box) in enumerate(candidates):
+    for index, candidate in enumerate(candidates):
+        box = candidate.bbox
         roi = image.crop((floor(box.x1), floor(box.y1), ceil(box.x2), ceil(box.y2)))
         mark = analyze_dark_line(roi, settings)
         has_crack = bool(cracks[index])
         source = ("both" if mark.detected and has_crack else "dark_line" if mark.detected
                   else "yolo_crack" if has_crack else "none")
         eggs.append(EggResult(
-            id=index + 1, confidence=raw.confidence, bbox=box,
+            id=index + 1, confidence=candidate.confidence, bbox=box,
+            localization_source=candidate.localization_source,
             bbox_normalized=normalize_bbox(box, width, height),
             status="damaged" if mark.detected or has_crack else "healthy",
             damage_source=source, dark_line_area_ratio=mark.area_ratio,

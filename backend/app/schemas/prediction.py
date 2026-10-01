@@ -48,6 +48,8 @@ class ModelInfo(BaseModel):
 class EggResult(PrimaryEgg):
     # Frame-local number; not a persistent tracking identity.
     id: int = Field(ge=1)
+    # confidence=0 for demo_shape: no YOLO score exists for that object.
+    localization_source: Literal["yolo", "demo_shape", "yolo+demo_shape"] = "yolo"
     status: Literal["healthy", "damaged"]
     damage_source: Literal["none", "dark_line", "yolo_crack", "both"]
     dark_line_area_ratio: float = Field(ge=0.0, le=1.0)

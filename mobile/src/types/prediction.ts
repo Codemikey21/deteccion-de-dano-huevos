@@ -55,6 +55,7 @@ export interface EggResult extends PrimaryEgg {
   /** Number within the current frame, not a persistent tracking ID. */
   id: number;
   status: 'healthy' | 'damaged';
+  localization_source?: 'yolo' | 'demo_shape' | 'yolo+demo_shape';
   damage_source: 'none' | 'dark_line' | 'yolo_crack' | 'both';
   dark_line_area_ratio: number;
   cracks: Detection[];

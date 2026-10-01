@@ -12,7 +12,7 @@ export function getMultiEggResult(prediction: PredictionResponse | null): {
 
 export function damageLabel(source: EggResult['damage_source']): string {
   switch (source) {
-    case 'dark_line': return 'raya oscura (simulación)';
+    case 'dark_line': return 'marca oscura visible';
     case 'yolo_crack': return 'grieta detectada por modelo';
     case 'both': return 'raya oscura y grieta del modelo';
     default: return 'sin daño visible detectado';

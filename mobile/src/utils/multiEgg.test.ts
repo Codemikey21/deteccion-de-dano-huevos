@@ -37,7 +37,7 @@ describe('multi-egg presentation', () => {
     assert.deepEqual(result?.eggs.map((item) => item.id), [1, 2, 3, 4, 5]);
   });
   it('distinguishes simulated marks from model evidence', () => {
-    assert.match(damageLabel('dark_line'), /simulación/);
+    assert.equal(damageLabel('dark_line'), 'marca oscura visible');
     assert.match(damageLabel('yolo_crack'), /modelo/);
     assert.match(damageLabel('both'), /raya oscura y grieta/);
     assert.equal(damageLabel('none'), 'sin daño visible detectado');
